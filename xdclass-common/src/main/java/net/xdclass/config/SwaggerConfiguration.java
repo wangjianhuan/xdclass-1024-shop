@@ -10,7 +10,6 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.DocumentationCache;
 import springfox.documentation.spring.web.plugins.Docket;
 
 /**
@@ -24,6 +23,10 @@ import springfox.documentation.spring.web.plugins.Docket;
 @EnableOpenApi
 public class SwaggerConfiguration {
 
+    /**
+     * 对c端的用户的接口文档
+     * @return
+     */
     @Bean
     public Docket webApiDoc(){
 
@@ -48,4 +51,25 @@ public class SwaggerConfiguration {
                 .version("v1.0")
                 .build();
     }
+
+    /**
+     * 对管理端的接口文档
+     * @return
+     */
+    @Bean
+    public Docket AdminApiDoc(){
+
+        return new Docket(DocumentationType.OAS_30)
+                .groupName("管理端接口文档")
+                .pathMapping("/")
+                //是否开启Swagger，线上关闭
+                .enable(true)
+                //配置文档的元信息
+                .apiInfo(apiInfo())
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("net.xdclass"))
+                .paths(PathSelectors.ant("/api/**"))
+                .build();
+    }
+
 }
