@@ -33,11 +33,6 @@ public class AddressController {
     @GetMapping("find/{address_id}")
     public Object detail(@ApiParam(value = "地址id",required = true) @PathVariable("address_id") Long addressId){
 
-//        int i = 1 /
-
-//        if (addressId == 1){
-//            throw new BizException(-1,"全局自定义异常");
-//        }
         return addressService.detail(addressId);
     }
 }

@@ -11,10 +11,22 @@ spring:
     url: jdbc:mysql://47.115.119.249:3306/xdclass_user?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: 601327
+#    Redis配置
   redis:
     host: 192.168.0.101
     port: 8000
     password: 123456
+#    Mail邮箱配置
+  mail:
+    host: smtp.163.com
+    username: wangjh1256@163.com
+    password: IRDTQJJSVKECZNPL
+    from: wangjh1256@163.com
+    properties.mail.smtp.starttls.enable: true
+    properties.mail.smtp.starttls.required: true
+    properties.mail.smtp.ssl.enable: true
+    default-encoding: utf-8
+
 
 #配置plus打印sql日志
 mybatis-plus:
