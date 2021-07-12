@@ -37,3 +37,11 @@ mybatis-plus:
 logging:
   level:
     root: INFO
+
+#阿里云oss配置
+aliyun:
+  oss:
+    endpoint: oss-cn-shenzhen.aliyuncs.com
+    access-key-id: LTAI5tLkL6KQ7VNWfvDWNfqr
+    access-key-secret: zRvGjxNBpLCibavXE5z06mVoJ3I13e
+    bucketname: wangjianhuan-1024shop

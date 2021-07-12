@@ -2,7 +2,6 @@ package net.xdclass.enums;
 
 import lombok.Getter;
 
-import javax.xml.transform.sax.SAXResult;
 
 /**
  * @author WJH
@@ -13,6 +12,7 @@ import javax.xml.transform.sax.SAXResult;
  *  *  比如 商品服务210,购物车是220、用户服务230，403代表权限
  */
 public enum BizCodeEnum {
+
 
     /**
      * 通用操作码
@@ -32,7 +32,14 @@ public enum BizCodeEnum {
      */
     ACCOUNT_REPEAT(250001,"账号已经存在"),
     ACCOUNT_UNREGISTER(250002,"账号不存在"),
-    ACCOUNT_PWD_ERROR(250003,"账号或者密码错误");
+    ACCOUNT_PWD_ERROR(250003,"账号或者密码错误"),
+
+
+
+    FILE_UPLOAD_USER_IMG_FAIL(600101, "用户头像上传失败");
+
+
+
 
     @Getter
     private String message;
