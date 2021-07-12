@@ -81,6 +81,7 @@ public class CommonUtil {
 
     /**
      * 获取随机数
+     *
      * @param lenght
      * @return
      */
@@ -93,5 +94,13 @@ public class CommonUtil {
             sb.append(sources.charAt(random.nextInt(9)));
         }
         return sb.toString();
+    }
+
+    /**
+     * 获取当前时间戳
+     * @return
+     */
+    public static long getCurrentTimestamp(){
+        return System.currentTimeMillis();
     }
 }
