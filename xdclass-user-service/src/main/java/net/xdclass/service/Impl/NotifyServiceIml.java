@@ -58,7 +58,7 @@ public class NotifyServiceIml implements NotifyService {
         /**
          * 如果不为空 ，则判断是否60秒内重复发送
          */
-        if(StringUtils.isNotBlank(cacheValue)){
+        if (StringUtils.isNotBlank(cacheValue)) {
             long ttl = Long.parseLong(cacheValue.split("_")[1]);
             //当前时间戳 - 验证码发送的时间戳 ，如果小于60秒 ， 则不会重复发送
             if (CommonUtil.getCurrentTimestamp() - ttl < 1000 * 60) {
@@ -78,7 +78,24 @@ public class NotifyServiceIml implements NotifyService {
         } else if (CheckUtil.isPhone(to)) {
             // TODO: 2021/7/12  短信验证码
         }
-
         return null;
     }
+
+    @Override
+    public boolean checkCode(SendCodeEnum sendCodeEnum, String to, String code) {
+        String cacheKey = String.format(CacheKey.CHECK_CODE_KEY, sendCodeEnum.name(), to);
+
+        String cacheValue = redisTemplate.opsForValue().get(cacheKey);
+
+        if (StringUtils.isNoneBlank(cacheKey)) {
+            String cacheCode = cacheValue.split("_")[0];
+            if (cacheCode.equals(code)){
+                redisTemplate.delete(cacheKey);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 }
