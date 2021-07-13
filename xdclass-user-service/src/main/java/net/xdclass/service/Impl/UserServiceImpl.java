@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.SendCodeEnum;
 import net.xdclass.mapper.UserMapper;
+import net.xdclass.model.LoginUser;
 import net.xdclass.model.UserDO;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.service.NotifyService;
 import net.xdclass.service.UserService;
 import net.xdclass.utils.CommonUtil;
+import net.xdclass.utils.JWTUtil;
 import net.xdclass.utils.JsonData;
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +44,7 @@ public class UserServiceImpl implements UserService {
     /**
      * 用户注册
      * * 邮箱验证码验证
-     * * 密码加密（TODO）
+     * * 密码加密
      * * 账号唯一性检查(TODO)
      * * 插入数据库
      * * 新注册用户福利发放(TODO)
@@ -76,7 +78,7 @@ public class UserServiceImpl implements UserService {
         String cryptPwd = Md5Crypt.md5Crypt(registerRequest.getPwd().getBytes(), userDO.getSecret());
         userDO.setPwd(cryptPwd);
 
-        // TODO: 2021/7/13  账号唯一性检查  
+        // TODO: 2021/7/13  账号唯一性检查
 
         if (checkUnique(userDO.getMail())) {
             int rows = userMapper.insert(userDO);
@@ -109,8 +111,13 @@ public class UserServiceImpl implements UserService {
             String crypt = Md5Crypt.md5Crypt(userLoginRequest.getPwd().getBytes(), userDO.getSecret());
             if (crypt.equals(userDO.getPwd())) {
                 //登录成功
-                // TODO: 2021/7/13 生成token
-                return JsonData.buildSuccess();
+                LoginUser loginUser = new LoginUser();
+                BeanUtils.copyProperties(userDO,loginUser);
+
+                String token = JWTUtil.geneJsonWebToken(loginUser);
+
+
+                return JsonData.buildSuccess(token);
             } else {
                 return JsonData.buildResult(BizCodeEnum.ACCOUNT_PWD_ERROR);
             }
