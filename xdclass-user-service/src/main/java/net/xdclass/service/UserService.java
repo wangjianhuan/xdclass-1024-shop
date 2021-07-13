@@ -3,6 +3,7 @@ package net.xdclass.service;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.utils.JsonData;
+import net.xdclass.vo.UserVO;
 
 /**
  * @author WJH
@@ -25,4 +26,10 @@ public interface UserService {
      * @return
      */
     JsonData login(UserLoginRequest userLoginRequest);
+
+    /**
+     * 查询用户详情
+     * @return
+     */
+    UserVO findUserDetail();
 }

@@ -42,9 +42,9 @@ public class LoginInterceptor implements HandlerInterceptor {
             }
 
             long userId = Long.valueOf(claims.get("id").toString());
-            String headImg = (String)claims.get("head_img");
-            String name = (String)claims.get("name");
-            String mail = (String)claims.get("mail");
+            String headImg = (String) claims.get("head_img");
+            String name = (String) claims.get("name");
+            String mail = (String) claims.get("mail");
 
 
             LoginUser loginUser = new LoginUser();

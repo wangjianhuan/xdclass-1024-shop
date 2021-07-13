@@ -1,9 +1,7 @@
 package net.xdclass.controller;
 
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.*;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
@@ -69,6 +67,15 @@ public class UserController {
     @PostMapping("login")
     public JsonData login(@ApiParam("用户登录对象") @RequestBody UserLoginRequest userLoginRequest) {
         return userService.login(userLoginRequest);
+    }
+
+    @ApiOperation("个人信息查询")
+    @GetMapping("detail")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", required = true),
+    })
+    public JsonData detail(){
+        return JsonData.buildSuccess(userService.findUserDetail());
     }
 }
 

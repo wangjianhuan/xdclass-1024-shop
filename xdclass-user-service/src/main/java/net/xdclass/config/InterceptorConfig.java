@@ -16,13 +16,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Slf4j
 public class InterceptorConfig implements WebMvcConfigurer {
 
-    public LoginInterceptor loginInterceptor(){
-        return new LoginInterceptor();
-    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginInterceptor())
+        registry.addInterceptor(new LoginInterceptor())
                 .addPathPatterns("/api/user/*/**","/api/address/*/**")
                 //排除不拦截的路径
                 .excludePathPatterns("/api/user/*/send_code","/api/user/*/captcha",
