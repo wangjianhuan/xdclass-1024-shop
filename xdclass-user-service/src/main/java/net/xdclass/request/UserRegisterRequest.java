@@ -19,7 +19,7 @@ public class UserRegisterRequest {
     @ApiModelProperty(value = "昵称",example = "Anna小姐姐")
     private String name;
 
-    @ApiModelProperty(value = "密码",example = "12345")
+    @ApiModelProperty(value = "密码",example = "123456")
     private String pwd;
 
     @ApiModelProperty(value = "头像",example = "https://wangjianhuan-1024shop.oss-cn-shenzhen.aliyuncs.com/user/2021/07/12/ab2da37343664d3e8a7e5fcf11bc9a4c.png")

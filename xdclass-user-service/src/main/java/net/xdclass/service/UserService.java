@@ -1,5 +1,6 @@
 package net.xdclass.service;
 
+import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.utils.JsonData;
 
@@ -17,4 +18,11 @@ public interface UserService {
      * @return
      */
     JsonData register(UserRegisterRequest registerRequest);
+
+    /**
+     * 用户登录接口
+     * @param userLoginRequest
+     * @return
+     */
+    JsonData login(UserLoginRequest userLoginRequest);
 }
