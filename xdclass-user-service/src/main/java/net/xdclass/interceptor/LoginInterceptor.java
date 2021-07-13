@@ -22,6 +22,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Slf4j
 public class LoginInterceptor implements HandlerInterceptor {
+
+    public static ThreadLocal<LoginUser> threadLocal = new ThreadLocal<>();
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String accesstoken = request.getHeader("token");
@@ -54,7 +57,8 @@ public class LoginInterceptor implements HandlerInterceptor {
             //通过attribute传递用户信息
             //request.setAttribute("loginUser",loginUser);
 
-            // TODO: 2021/7/13  通过threadLocal传递用户登录信息  
+            //  通过threadLocal传递用户登录信息
+            threadLocal.set(loginUser);
 
             return true;
         }
