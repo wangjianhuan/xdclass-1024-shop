@@ -47,11 +47,12 @@ public class LoginInterceptor implements HandlerInterceptor {
             String mail = (String) claims.get("mail");
 
 
-            LoginUser loginUser = new LoginUser();
-            loginUser.setName(name);
-            loginUser.setHeadImg(headImg);
-            loginUser.setId(userId);
-            loginUser.setMail(mail);
+            LoginUser loginUser = LoginUser
+                    .builder()
+                    .headImg(headImg)
+                    .name(name)
+                    .id(userId)
+                    .mail(mail).build();
 
             //通过attribute传递用户信息
             //request.setAttribute("loginUser",loginUser);

@@ -1,6 +1,7 @@
 package net.xdclass.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -10,6 +11,7 @@ import lombok.Data;
  * @QQ 1151777592
  */
 @Data
+@Builder
 public class LoginUser {
 
     /**

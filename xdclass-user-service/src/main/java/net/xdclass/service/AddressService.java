@@ -1,6 +1,7 @@
 package net.xdclass.service;
 
 import net.xdclass.model.AddressDO;
+import net.xdclass.request.AddressAddRequest;
 
 /**
  * @author WJH
@@ -10,5 +11,16 @@ import net.xdclass.model.AddressDO;
  */
 public interface AddressService {
 
+    /**
+     * 查找用户
+     * @param id
+     * @return
+     */
     AddressDO detail(Long id);
+
+    /**
+     * 新增收货地址
+     * @param addressAddRequest
+     */
+    void add(AddressAddRequest addressAddRequest);
 }

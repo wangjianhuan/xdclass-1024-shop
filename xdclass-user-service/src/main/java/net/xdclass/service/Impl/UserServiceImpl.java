@@ -113,7 +113,7 @@ public class UserServiceImpl implements UserService {
             String crypt = Md5Crypt.md5Crypt(userLoginRequest.getPwd().getBytes(), userDO.getSecret());
             if (crypt.equals(userDO.getPwd())) {
                 //登录成功
-                LoginUser loginUser = new LoginUser();
+                LoginUser loginUser = LoginUser.builder().build();
                 BeanUtils.copyProperties(userDO, loginUser);
 
                 String token = JWTUtil.geneJsonWebToken(loginUser);

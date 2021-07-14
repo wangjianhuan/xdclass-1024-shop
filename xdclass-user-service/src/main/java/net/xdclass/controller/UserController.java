@@ -71,9 +71,6 @@ public class UserController {
 
     @ApiOperation("个人信息查询")
     @GetMapping("detail")
-    @ApiImplicitParams({
-            @ApiImplicitParam(paramType = "header", name = "token", required = true),
-    })
     public JsonData detail(){
         return JsonData.buildSuccess(userService.findUserDetail());
     }
