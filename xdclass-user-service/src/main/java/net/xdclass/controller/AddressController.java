@@ -7,12 +7,15 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.exception.BizException;
+import net.xdclass.model.AddressDO;
 import net.xdclass.request.AddressAddRequest;
 import net.xdclass.service.AddressService;
 import net.xdclass.utils.JsonData;
 import net.xdclass.vo.AddressVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * <p>
@@ -67,6 +70,17 @@ public class AddressController {
 
         int rows = addressService.del(addressId);
         return rows == 1 ? JsonData.buildSuccess():JsonData.buildResult(BizCodeEnum.ADDRESS_DEL_FAIL);
+    }
+
+    /**
+     * 查找用户全部收货地址
+     * @return
+     */
+    @ApiOperation("查询用户的全部收货地址")
+    @GetMapping("/list")
+    public JsonData findUserAllAddress(){
+        List<AddressVO> list = addressService.listUserAllAddress();
+        return JsonData.buildSuccess(list);
     }
 }
 

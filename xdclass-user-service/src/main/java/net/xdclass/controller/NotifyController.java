@@ -50,7 +50,8 @@ public class NotifyController {
      */
     private static final long CAPTCHA_CODE_EXPIRED = 60 * 1000 * 10;
 
-    @RequestMapping("captcha")
+    @ApiOperation("图片验证码")
+    @GetMapping("captcha")
     public void getCaptcha(HttpServletRequest request, HttpServletResponse response) {
         String captcha = captchaProducer.createText();
         log.info("验证码" + captcha);

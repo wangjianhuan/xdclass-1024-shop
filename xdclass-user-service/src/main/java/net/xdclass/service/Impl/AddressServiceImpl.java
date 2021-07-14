@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author WJH
@@ -84,5 +86,25 @@ public class AddressServiceImpl implements AddressService {
 
         int address_id = addressMapper.delete(new QueryWrapper<AddressDO>().eq("id", addressId));
         return address_id;
+    }
+
+    /**
+     * 查找用户全部收货地址
+     * @return
+     */
+    @Override
+    public List<AddressVO> listUserAllAddress() {
+
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+        List<AddressDO> list = addressMapper.selectList(new QueryWrapper<AddressDO>().eq("user_id", loginUser.getId()));
+
+        //JDK 8 新特性
+        List<AddressVO> addressVOList = list.stream().map(obj -> {
+            AddressVO addressVO = new AddressVO();
+            BeanUtils.copyProperties(obj, addressVO);
+            return addressVO;
+        }).collect(Collectors.toList());
+
+        return addressVOList;
     }
 }
