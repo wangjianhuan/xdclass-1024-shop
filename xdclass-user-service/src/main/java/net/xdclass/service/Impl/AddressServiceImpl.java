@@ -31,9 +31,13 @@ public class AddressServiceImpl implements AddressService {
     @Autowired
     private AddressMapper addressMapper;
 
+
+
     @Override
     public AddressVO detail(Long id) {
-        AddressDO addressDO = addressMapper.selectOne(new QueryWrapper<AddressDO>().eq("id", id));
+
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+        AddressDO addressDO = addressMapper.selectOne(new QueryWrapper<AddressDO>().eq("id", id).eq("user_id",loginUser.getId()));
 
         if(addressDO == null){
             return null;
@@ -84,7 +88,8 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public int del(int addressId) {
 
-        int address_id = addressMapper.delete(new QueryWrapper<AddressDO>().eq("id", addressId));
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+        int address_id = addressMapper.delete(new QueryWrapper<AddressDO>().eq("id", addressId).eq("user_id",loginUser.getId()));
         return address_id;
     }
 
