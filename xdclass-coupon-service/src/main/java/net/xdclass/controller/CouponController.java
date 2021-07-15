@@ -59,7 +59,7 @@ public class CouponController {
 
         JsonData jsonData = couponService.addCoupon(couponId, CouponCategoryEnum.PROMOTION);
 
-        return JsonData.buildSuccess(jsonData);
+        return jsonData;
     }
 
 }
