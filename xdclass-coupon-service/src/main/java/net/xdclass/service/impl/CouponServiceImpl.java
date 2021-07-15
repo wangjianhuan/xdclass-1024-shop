@@ -105,7 +105,7 @@ public class CouponServiceImpl implements CouponService {
         couponRecordDO.setId(null);
 
         // TODO: 2021/7/15  扣减库存
-        int rows = 1;//couponMapper.reduceStack(couponId);
+        int rows =couponMapper.reduceStock(couponId);
 
         if (rows == 1) {
             //库存扣减成功才保存记录

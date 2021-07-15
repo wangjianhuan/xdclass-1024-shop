@@ -23,4 +23,5 @@
         id, coupon_id, create_time, use_state, user_id, user_name, coupon_title, start_time, end_time, order_id, price, condition_price
     </sql>
 
+
 </mapper>

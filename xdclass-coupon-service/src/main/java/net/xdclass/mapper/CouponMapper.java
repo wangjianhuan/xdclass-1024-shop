@@ -18,5 +18,5 @@ public interface CouponMapper extends BaseMapper<CouponDO> {
      * @param couponId
      * @return
      */
-    int reduceStack(long couponId);
+    int reduceStock(long couponId);
 }
