@@ -4,13 +4,17 @@ package net.xdclass.controller;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.CouponCategoryEnum;
 import net.xdclass.service.CouponService;
 import net.xdclass.utils.JsonData;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -61,6 +65,28 @@ public class CouponController {
 
         return jsonData;
     }
+
+    //redisson分布式锁实践
+//    @GetMapping("lock")
+//    public JsonData testLock(){
+//
+//        RLock lock = redissonClient.getLock("lock:coupon:1");
+//
+//        lock.lock();
+//        try{
+//            log.info("加锁成功"+Thread.currentThread().getId());
+//            try {
+//                TimeUnit.SECONDS.sleep(20);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }finally {
+//            lock.unlock();
+//            log.info("解锁成功"+Thread.currentThread().getId());
+//        }
+//
+//        return JsonData.buildSuccess();
+//    }
 
 }
 
