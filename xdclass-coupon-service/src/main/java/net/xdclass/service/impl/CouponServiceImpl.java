@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -92,6 +94,7 @@ public class CouponServiceImpl implements CouponService {
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public JsonData addCoupon(long couponId, CouponCategoryEnum category) {
 
 
@@ -197,7 +200,7 @@ public class CouponServiceImpl implements CouponService {
                 log.warn("优惠券发放失败:{},用户:{}", couponDO, loginUser);
                 throw new BizException(BizCodeEnum.COUPON_NO_STOCK);
             }
-        }finally {
+        } finally {
             lock.unlock();
         }
 
