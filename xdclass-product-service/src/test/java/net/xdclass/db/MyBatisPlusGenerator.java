@@ -52,7 +52,7 @@ public class MyBatisPlusGenerator {
         // 设置数据库类型
         dsConfig.setDbType(DbType.MYSQL)
                 .setDriverName("com.mysql.cj.jdbc.Driver")
-                .setUrl("jdbc:mysql://192.668.0.101:3306/xdclass_user?useSSL=false")
+                .setUrl("jdbc:mysql://192.168.0.101:3306/xdclass_product?useSSL=false")
                 .setUsername("root")
                 .setPassword("123456");
 
@@ -71,7 +71,7 @@ public class MyBatisPlusGenerator {
                 .setRestControllerStyle(true)
 
         // 生成的表, 支持多表一起生成，以数组形式填写
-                .setInclude("user", "address");
+                .setInclude("banner", "product");
 
         //4. 包名策略配置
         PackageConfig pkConfig = new PackageConfig();
