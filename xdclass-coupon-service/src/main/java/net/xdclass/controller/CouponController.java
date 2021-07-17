@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.CouponCategoryEnum;
+import net.xdclass.request.NewUserCouponRequest;
 import net.xdclass.service.CouponService;
 import net.xdclass.utils.JsonData;
 import org.redisson.api.RLock;
@@ -41,7 +42,7 @@ public class CouponController {
      * @return
      */
     @ApiOperation("分页查询优惠券")
-    @GetMapping("page_coupon")
+    @GetMapping("/page_coupon")
     public JsonData pageCouponList(
             @ApiParam(value = "当前页") @RequestParam(value = "page", defaultValue = "1") int page,
             @ApiParam(value = "每页显示多少条") @RequestParam(value = "size", defaultValue = "10") int size
@@ -64,6 +65,20 @@ public class CouponController {
         JsonData jsonData = couponService.addCoupon(couponId, CouponCategoryEnum.PROMOTION);
 
         return jsonData;
+    }
+
+    /**
+     * 新用户发放优惠券注册接口
+     * @return
+     */
+    @ApiOperation("RPC-新用户注册接口")
+    @PostMapping("/new_user_coupon")
+    public JsonData addNewUserCoupon(@RequestBody @ApiParam("用户对象") NewUserCouponRequest newUserCouponRequest){
+
+        JsonData jsonData = couponService.initNewUserCoupon(newUserCouponRequest);
+
+        return jsonData;
+
     }
 
     //redisson分布式锁实践
