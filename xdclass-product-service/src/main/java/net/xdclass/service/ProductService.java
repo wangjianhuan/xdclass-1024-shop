@@ -1,5 +1,7 @@
 package net.xdclass.service;
 
+import net.xdclass.VO.ProductVO;
+
 import java.util.Map;
 
 /**
@@ -16,4 +18,11 @@ public interface ProductService {
      * @return
      */
     Map<String, Object> page(int page, int size);
+
+    /**
+     * 根据ID商品详情查询
+     * @param productId
+     * @return
+     */
+    ProductVO findDetailById(long productId);
 }
