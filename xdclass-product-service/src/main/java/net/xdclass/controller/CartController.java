@@ -27,16 +27,25 @@ public class CartController {
 
     @ApiOperation("添加到购物车")
     @PostMapping("add")
-    public JsonData addToCart( @ApiParam("购物项") @RequestBody  CartItemRequest cartItemRequest){
+    public JsonData addToCart(@ApiParam("购物项") @RequestBody CartItemRequest cartItemRequest) {
 
         cartService.addToCart(cartItemRequest);
 
         return JsonData.buildSuccess();
     }
 
+    @ApiOperation("修改购物车数量")
+    @PostMapping("change")
+    public JsonData changeItem(@ApiParam("购物项") @RequestBody CartItemRequest cartItemRequest) {
+
+        cartService.changeItemNum(cartItemRequest);
+
+        return JsonData.buildSuccess();
+    }
+
     @ApiOperation("清空购物车")
     @DeleteMapping("clear")
-    public JsonData cleanMyCart(){
+    public JsonData cleanMyCart() {
 
         cartService.clear();
         return JsonData.buildSuccess();
@@ -44,11 +53,18 @@ public class CartController {
 
     @ApiOperation("查看我的购物车")
     @GetMapping("mycart")
-    private JsonData findMyCart(){
+    public JsonData findMyCart() {
 
         CartVO cartVO = cartService.getMyCart();
 
-        return JsonData.buildSuccess(cartVO) ;
+        return JsonData.buildSuccess(cartVO);
+    }
+
+    @ApiOperation("删除购物项")
+    @DeleteMapping("delete/{product_id}")
+    public JsonData deleteItem(@ApiParam(value = "商品ID",required = true) @PathVariable("product_id") long productId) {
+        cartService.deleteItem(productId);
+        return JsonData.buildSuccess();
     }
 
 }
