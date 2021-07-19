@@ -3,6 +3,7 @@ package net.xdclass.controller;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import net.xdclass.VO.CartVO;
 import net.xdclass.request.CartItemRequest;
 import net.xdclass.service.CartService;
 import net.xdclass.utils.JsonData;
@@ -40,4 +41,14 @@ public class CartController {
         cartService.clear();
         return JsonData.buildSuccess();
     }
+
+    @ApiOperation("查看我的购物车")
+    @GetMapping("mycart")
+    private JsonData findMyCart(){
+
+        CartVO cartVO = cartService.getMyCart();
+
+        return JsonData.buildSuccess(cartVO) ;
+    }
+
 }
