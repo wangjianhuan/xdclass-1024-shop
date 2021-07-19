@@ -69,6 +69,14 @@ public class CartServiceImpl implements CartService {
 
     }
 
+    /**
+     * 清空购物车
+     */
+    @Override
+    public void clear() {
+        redisTemplate.delete(getCartKey());
+    }
+
 
     /**
      * 抽取我的购物车，通用方法
