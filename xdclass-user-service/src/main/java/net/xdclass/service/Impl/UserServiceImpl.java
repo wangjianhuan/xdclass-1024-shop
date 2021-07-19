@@ -15,14 +15,13 @@ import net.xdclass.service.UserService;
 import net.xdclass.utils.CommonUtil;
 import net.xdclass.utils.JWTUtil;
 import net.xdclass.utils.JsonData;
-import net.xdclass.vo.UserVO;
+import net.xdclass.VO.UserVO;
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 

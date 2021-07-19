@@ -6,19 +6,18 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
- * @author WJH
- * @date 2021/7/19 上午7:39
- * @QQ 1151777592
- */
+ * @Author WJH
+ **/
+
 @ApiModel
 @Data
 public class CartItemRequest {
 
-    @ApiModelProperty(value = "商品id", example = "11")
+    @ApiModelProperty(value = "商品id",example = "11")
     @JsonProperty("product_id")
     private long productId;
 
-    @ApiModelProperty(value = "购买数量", example = "1")
+    @ApiModelProperty(value = "购买数量",example = "1")
     @JsonProperty("buy_num")
     private int buyNum;
 }

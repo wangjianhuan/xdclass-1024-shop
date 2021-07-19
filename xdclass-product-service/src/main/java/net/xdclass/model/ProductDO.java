@@ -10,9 +10,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
+ * <p>
+ * 
+ * </p>
+ *
  * @author WJH
- * @date 2021/7/18 上午12:55
- * @QQ 1151777592
+ * @since 2021-07-18
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -21,7 +24,7 @@ public class ProductDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.AUTO)
+      @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**

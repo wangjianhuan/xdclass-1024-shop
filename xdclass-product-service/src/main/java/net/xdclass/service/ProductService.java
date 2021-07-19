@@ -4,11 +4,6 @@ import net.xdclass.VO.ProductVO;
 
 import java.util.Map;
 
-/**
- * @author WJH
- * @date 2021/7/18 下午1:35
- * @QQ 1151777592
- */
 public interface ProductService {
 
     /**
@@ -17,10 +12,10 @@ public interface ProductService {
      * @param size
      * @return
      */
-    Map<String, Object> page(int page, int size);
+    Map<String,Object> page(int page, int size);
 
     /**
-     * 根据ID商品详情查询
+     * 根据id找商品详情
      * @param productId
      * @return
      */

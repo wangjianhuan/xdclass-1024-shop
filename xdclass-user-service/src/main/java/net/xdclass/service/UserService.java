@@ -3,7 +3,7 @@ package net.xdclass.service;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.utils.JsonData;
-import net.xdclass.vo.UserVO;
+import net.xdclass.VO.UserVO;
 
 /**
  * @author WJH

@@ -9,7 +9,7 @@ import net.xdclass.model.AddressDO;
 import net.xdclass.model.LoginUser;
 import net.xdclass.request.AddressAddRequest;
 import net.xdclass.service.AddressService;
-import net.xdclass.vo.AddressVO;
+import net.xdclass.VO.AddressVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

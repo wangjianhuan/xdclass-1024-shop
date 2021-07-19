@@ -1,7 +1,7 @@
 package net.xdclass.service;
 
 import net.xdclass.request.AddressAddRequest;
-import net.xdclass.vo.AddressVO;
+import net.xdclass.VO.AddressVO;
 
 import java.util.List;
 
