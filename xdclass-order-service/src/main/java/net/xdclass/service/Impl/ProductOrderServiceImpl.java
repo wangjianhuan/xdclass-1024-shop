@@ -1,7 +1,9 @@
 package net.xdclass.service.Impl;
 
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.request.ConfirmOrderRequest;
 import net.xdclass.service.ProductOrderService;
+import net.xdclass.utils.JsonData;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,4 +14,15 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class ProductOrderServiceImpl implements ProductOrderService {
+
+    /**
+     * 创建订单
+     * @param orderRequest
+     * @return
+     */
+    @Override
+    public JsonData confirmOrder(ConfirmOrderRequest orderRequest) {
+        // TODO
+        return null;
+    }
 }
