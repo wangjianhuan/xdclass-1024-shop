@@ -1,4 +1,4 @@
-package net.xdclass.service.impl;
+package net.xdclass.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;

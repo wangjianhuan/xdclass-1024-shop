@@ -1,4 +1,4 @@
-package net.xdclass.service.impl;
+package net.xdclass.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
