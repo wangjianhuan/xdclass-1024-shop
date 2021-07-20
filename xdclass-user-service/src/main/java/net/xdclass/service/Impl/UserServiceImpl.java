@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.SendCodeEnum;
+import net.xdclass.feign.CouponFeignService;
 import net.xdclass.interceptor.LoginInterceptor;
 import net.xdclass.mapper.UserMapper;
 import net.xdclass.model.LoginUser;
 import net.xdclass.model.UserDO;
+import net.xdclass.request.NewUserCouponRequest;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.service.NotifyService;
@@ -34,6 +36,9 @@ import java.util.List;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private CouponFeignService couponFeignService;
 
     @Autowired
     private NotifyService notifyService;
@@ -85,7 +90,7 @@ public class UserServiceImpl implements UserService {
             int rows = userMapper.insert(userDO);
             log.info("rows:{},注册成功:{}", rows, userDO.toString());
 
-            // TODO: 2021/7/13  新用户注册成功，初始化信息，发放福利等 
+            //  新用户注册成功，初始化信息，发放福利等
             userRegisterInitTask(userDO);
             return JsonData.buildSuccess();
         } else {
@@ -157,11 +162,17 @@ public class UserServiceImpl implements UserService {
 
 
     /**
-     * 用户注册，初始化福利信息 TODO
+     * 用户注册，初始化福利信息
      *
      * @param userDO
      */
     private void userRegisterInitTask(UserDO userDO) {
+
+        NewUserCouponRequest request = new NewUserCouponRequest();
+        request.setUserId(userDO.getId());
+        request.setName(userDO.getName());
+        JsonData jsonData = couponFeignService.addNewUserCoupon(request);
+        log.info("发放新用户注册优惠券:{},结果:{}",request.toString(),jsonData.toString());
 
     }
 }
