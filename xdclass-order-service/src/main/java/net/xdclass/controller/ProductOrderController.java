@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.ClientType;
 import net.xdclass.enums.ProductOrderPayTypeEnum;
-import net.xdclass.enums.ProductOrderTypeEnum;
 import net.xdclass.request.ConfirmOrderRequest;
 import net.xdclass.service.ProductOrderService;
 import net.xdclass.utils.JsonData;
@@ -47,7 +46,7 @@ public class ProductOrderController {
 
             //如果是支付宝网页支付。都是跳转网页，APP除外
             if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
-                log.info("穿件订单成功:{}", orderRequest.toString());
+                log.info("创建订单成功:{}", orderRequest.toString());
                 if (client.equalsIgnoreCase(ClientType.H5.name())){
                     writeData(response, jsonData);
                 }else if (client.equalsIgnoreCase(ClientType.APP.name())){
