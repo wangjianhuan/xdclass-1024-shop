@@ -51,3 +51,12 @@ aliyun:
     access-key-id: LTAI5tLkL6KQ7VNWfvDWNfqr
     access-key-secret: zRvGjxNBpLCibavXE5z06mVoJ3I13e
     bucketname: wangjianhuan-1024shop
+
+#seata配置
+seata:
+  tx-service-group: ${spring.application.name}-group
+  service:
+    grouplist:
+      xdclass: 127.0.0.1:8091
+    vgroup-mapping:
+      xdclass-user-service-group: xdclass
