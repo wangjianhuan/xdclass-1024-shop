@@ -1,6 +1,7 @@
 package net.xdclass.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.SendCodeEnum;
@@ -23,6 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -51,14 +54,16 @@ public class UserServiceImpl implements UserService {
      * 用户注册
      * * 邮箱验证码验证
      * * 密码加密
-     * * 账号唯一性检查(TODO)
+     * * 账号唯一性检查
      * * 插入数据库
-     * * 新注册用户福利发放(TODO)
+     * * 新注册用户福利发放
      *
      * @param registerRequest
      * @return
      */
     @Override
+    @GlobalTransactional
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public JsonData register(UserRegisterRequest registerRequest) {
 
         boolean checkCode = false;
@@ -84,7 +89,7 @@ public class UserServiceImpl implements UserService {
         String cryptPwd = Md5Crypt.md5Crypt(registerRequest.getPwd().getBytes(), userDO.getSecret());
         userDO.setPwd(cryptPwd);
 
-        // TODO: 2021/7/13  账号唯一性检查
+        // 账号唯一性检查
 
         if (checkUnique(userDO.getMail())) {
             int rows = userMapper.insert(userDO);
@@ -92,6 +97,9 @@ public class UserServiceImpl implements UserService {
 
             //  新用户注册成功，初始化信息，发放福利等
             userRegisterInitTask(userDO);
+
+            //模拟异常
+//            int b = 1/0;
             return JsonData.buildSuccess();
         } else {
             return JsonData.buildResult(BizCodeEnum.ACCOUNT_REPEAT);
