@@ -1,6 +1,8 @@
 package net.xdclass.service;
 
 import net.xdclass.VO.CouponRecordVO;
+import net.xdclass.request.LockCouponRecordRequest;
+import net.xdclass.utils.JsonData;
 
 import java.util.Map;
 
@@ -25,4 +27,11 @@ public interface CouponRecordService {
      * @return
      */
     CouponRecordVO findById(long recordId);
+
+    /**
+     * 锁定优惠券
+     * @param recordRequest
+     * @return
+     */
+    JsonData lockCouponRecords(LockCouponRecordRequest recordRequest);
 }
