@@ -47,6 +47,7 @@ public class NotifyController {
 
     /**
      * 图形验证码有效时间
+     * 十分钟
      */
     private static final long CAPTCHA_CODE_EXPIRED = 60 * 1000 * 10;
 

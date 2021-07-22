@@ -1,8 +1,9 @@
 package net.xdclass.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import io.seata.spring.annotation.GlobalTransactional;
+//import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.SendCodeEnum;
 import net.xdclass.feign.CouponFeignService;
@@ -62,8 +63,8 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    @GlobalTransactional
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+//    @GlobalTransactional
+//    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public JsonData register(UserRegisterRequest registerRequest) {
 
         boolean checkCode = false;
@@ -80,9 +81,10 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(registerRequest, userDO);
 
         userDO.setCreateTime(new Date());
-        userDO.setSlogan("人生需要动态规划，学习需要贪心算法");
-
-        //设置密码 
+        if (userDO.getSlogan()==null) {
+            userDO.setSlogan("人生需要动态规划，学习需要贪心算法");
+        }
+        //设置密码
         //生成秘钥
         userDO.setSecret("$1$" + CommonUtil.getStringNumRandom(8));
         //密码 + 加盐处理

@@ -85,7 +85,7 @@ public class SwaggerConfiguration {
         return new ApiInfoBuilder()
                 .title("1024电商平台")
                 .description("微服务接口文档")
-                .contact(new Contact("小滴课堂-二当家小D", "https://xdclass.net", "微信 xdclass6"))
+                .contact(new Contact("WJH", "https://open1024.com", "1151777592@qq.com"))
                 .version("v1.0")
                 .build();
     }
