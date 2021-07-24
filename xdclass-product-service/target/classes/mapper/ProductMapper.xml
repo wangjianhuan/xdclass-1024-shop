@@ -36,7 +36,7 @@
 
         update product
         set lock_stock = lock_stock - #{buy_num}
-        where id #{product_id}
+        where id = #{product_id}
 
     </update>
 

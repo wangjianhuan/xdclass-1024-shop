@@ -177,8 +177,10 @@ public class ProductServiceImpl implements ProductService {
 
             //查询订单状态
             JsonData jsonData = orderFeignService.queryProductOrderState(productMessage.getOutTradeNo());
-            String state = jsonData.getData().toString();
+
             if (jsonData.getCode()==0) {
+
+                String state = jsonData.getData().toString();
                 if (ProductOrderStateEnum.NEW.name().equalsIgnoreCase(state)) {
                     //状态是NEW新建状态，则返回给消息队，列重新投递
                     log.warn("订单状态是NEW,返回给消息队列，重新投递:{}", productMessage);
