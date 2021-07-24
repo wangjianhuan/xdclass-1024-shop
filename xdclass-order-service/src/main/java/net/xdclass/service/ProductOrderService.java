@@ -28,4 +28,11 @@ public interface ProductOrderService {
      * @return
      */
     JsonData confirmOrder(ConfirmOrderRequest orderRequest);
+
+    /**
+     * 查询订单状态
+     * @param outTradeNo
+     * @return
+     */
+    String queryProductOrderState(String outTradeNo);
 }

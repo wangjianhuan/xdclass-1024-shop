@@ -4,16 +4,15 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.ClientType;
 import net.xdclass.enums.ProductOrderPayTypeEnum;
 import net.xdclass.request.ConfirmOrderRequest;
 import net.xdclass.service.ProductOrderService;
 import net.xdclass.utils.JsonData;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -33,6 +32,23 @@ public class ProductOrderController {
     @Autowired
     private ProductOrderService orderService;
 
+    /**
+     * 查询订单状态
+     * 此接口RPC调用 没有登录拦截，如果需要可以增加秘钥加密
+     *
+     * @param outTradeNo
+     * @return
+     */
+    @ApiOperation("查询订单状态")
+    @GetMapping("query_state")
+    private JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no") String outTradeNo) {
+
+        String state = orderService.queryProductOrderState(outTradeNo);
+
+        return StringUtils.isNoneBlank(state) ? JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST) : JsonData.buildSuccess(state);
+
+    }
+
     @ApiOperation("提交订单")
     @PostMapping("confirm")
     public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response) {
@@ -47,9 +63,9 @@ public class ProductOrderController {
             //如果是支付宝网页支付。都是跳转网页，APP除外
             if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
                 log.info("创建订单成功:{}", orderRequest.toString());
-                if (client.equalsIgnoreCase(ClientType.H5.name())){
+                if (client.equalsIgnoreCase(ClientType.H5.name())) {
                     writeData(response, jsonData);
-                }else if (client.equalsIgnoreCase(ClientType.APP.name())){
+                } else if (client.equalsIgnoreCase(ClientType.APP.name())) {
                     //APP SDK支付   todo
                 }
 
