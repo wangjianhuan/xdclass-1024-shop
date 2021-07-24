@@ -5,18 +5,21 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.netty.handler.codec.compression.Bzip2Decoder;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.config.RabbitMQConfig;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.StockTaskStateEnum;
 import net.xdclass.exception.BizException;
 import net.xdclass.mapper.ProductMapper;
 import net.xdclass.mapper.ProductTaskMapper;
 import net.xdclass.model.ProductDO;
+import net.xdclass.model.ProductMessage;
 import net.xdclass.model.ProductTaskDO;
 import net.xdclass.request.LockProductRequest;
 import net.xdclass.request.OrderItemRequest;
 import net.xdclass.service.ProductService;
 import net.xdclass.VO.ProductVO;
 import net.xdclass.utils.JsonData;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductTaskMapper productTaskMapper;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RabbitMQConfig rabbitMQConfig;
 
     /**
      * 商品分页
@@ -130,8 +139,16 @@ public class ProductServiceImpl implements ProductService {
                 productTaskDO.setOutTradeNo(outTradeNo);
 
                 productTaskMapper.insert(productTaskDO);
+                log.info("商品库存锁定-插入商品product_task成功:{}",productTaskDO);
 
-                //发送MQ延迟消息，解锁商品库存 TODO
+                //发送MQ延迟消息，解锁商品库存
+                ProductMessage productMessage = new ProductMessage();
+                productMessage.setOutTradeNo(outTradeNo);
+                productMessage.setTaskId(productTaskDO.getId());
+
+                rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(),rabbitMQConfig.getStockReleaseDelayRoutingKey(),productMessage);
+
+                log.info("商品库存锁定信息延迟消息发送成功",productMessage);
             }
         }
 

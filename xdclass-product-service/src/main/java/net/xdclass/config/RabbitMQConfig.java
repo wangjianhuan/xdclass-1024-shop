@@ -14,20 +14,18 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author WJH
- * @date 2021/7/24 下午5:58
- * @QQ 1151777592
- */
-@Data
+
 @Configuration
+@Data
 public class RabbitMQConfig {
+
 
     /**
      * 交换机
      */
     @Value("${mqconfig.stock_event_exchange}")
     private String eventExchange;
+
 
     /**
      * 第一个队列延迟队列，
@@ -41,6 +39,7 @@ public class RabbitMQConfig {
      */
     @Value("${mqconfig.stock_release_delay_routing_key}")
     private String stockReleaseDelayRoutingKey;
+
 
     /**
      * 第二个队列，被监听恢复库存的队列
@@ -61,6 +60,10 @@ public class RabbitMQConfig {
      */
     @Value("${mqconfig.ttl}")
     private Integer ttl;
+
+
+
+
 
     /**
      * 消息转换器
@@ -91,8 +94,8 @@ public class RabbitMQConfig {
 
         Map<String,Object> args = new HashMap<>(3);
         args.put("x-message-ttl",ttl);
-        args.put("x-dead-letter-routing-key",stockReleaseDelayQueue);
         args.put("x-dead-letter-exchange",eventExchange);
+        args.put("x-dead-letter-routing-key",stockReleaseRoutingKey);
 
         return new Queue(stockReleaseDelayQueue,true,false,false,args);
     }
@@ -128,4 +131,6 @@ public class RabbitMQConfig {
 
         return new Binding(stockReleaseQueue,Binding.DestinationType.QUEUE,eventExchange,stockReleaseRoutingKey,null);
     }
+
+
 }
