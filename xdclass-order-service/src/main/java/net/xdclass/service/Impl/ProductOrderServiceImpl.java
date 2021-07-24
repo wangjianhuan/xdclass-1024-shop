@@ -42,12 +42,11 @@ public class ProductOrderServiceImpl implements ProductOrderService {
      */
     @Override
     public String queryProductOrderState(String outTradeNo) {
+        ProductOrderDO productOrderDO = productOrderMapper.selectOne(new QueryWrapper<ProductOrderDO>().eq("out_trade_no",outTradeNo));
 
-        ProductOrderDO productOrderDO = productOrderMapper.selectOne(new QueryWrapper<ProductOrderDO>().eq("out_trade_no", outTradeNo));
-
-        if (productOrderDO == null) {
+        if(productOrderDO == null){
             return "";
-        } else {
+        }else {
             return productOrderDO.getState();
         }
     }

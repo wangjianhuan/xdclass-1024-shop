@@ -48,13 +48,15 @@ public class CouponRecordController {
         return couponRecordVO == null ? JsonData.buildResult(BizCodeEnum.COUPON_NO_EXITS) : JsonData.buildSuccess(couponRecordVO);
     }
 
-    @ApiOperation("RPC-锁定，优惠券记录")
+    @ApiOperation("rpc-锁定，优惠券记录")
     @PostMapping("lock_records")
-    public JsonData lockCouponRecords(@ApiParam("锁定优惠券请求对象") @RequestBody LockCouponRecordRequest recordRequest) {
+    public JsonData lockCouponRecords(@ApiParam("锁定优惠券请求对象") @RequestBody LockCouponRecordRequest recordRequest){
+
 
         JsonData jsonData = couponRecordService.lockCouponRecords(recordRequest);
 
-        return JsonData.buildSuccess();
+        return jsonData;
+
     }
 }
 

@@ -45,8 +45,9 @@ public class CouponMQListener {
     @RabbitHandler
     public void releaseCouponRecord(CouponRecordMessage recordMessage, Message message, Channel channel) throws IOException {
 
-        log.info("监听到消息: releaseCouponRecord消息内容:{}", recordMessage);
+        log.info("监听到消息：releaseCouponRecord消息内容：{}", recordMessage);
         long msgTag = message.getMessageProperties().getDeliveryTag();
+
         boolean flag = couponRecordService.releaseCouponRecord(recordMessage);
 
         //防止同个解锁任务并发进入  如果串行执行则不用加锁；
@@ -56,14 +57,16 @@ public class CouponMQListener {
             if (flag) {
                 //确认消息消费成功
                 channel.basicAck(msgTag, false);
-            } else {
-                log.error("释放优惠券失败 flag=false,{}", recordMessage);
-                channel.basicReject(msgTag, true);
+            }else {
+                log.error("释放优惠券失败 flag=false,{}",recordMessage);
+                channel.basicReject(msgTag,true);
             }
+
         } catch (IOException e) {
-            log.error("释放优惠券记录异常:{],msg:{}", e, recordMessage);
-            channel.basicReject(msgTag, true);
-        } //finally {
+            log.error("释放优惠券记录异常:{},msg:{}",e,recordMessage);
+            channel.basicReject(msgTag,true);
+        }
+        //finally {
         //    lock.unlock();
         //}
 

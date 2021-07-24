@@ -54,7 +54,7 @@ public class CouponRecordServiceImpl implements CouponRecordService {
     private RabbitMQConfig rabbitMQConfig;
 
     @Autowired
-    private ProductOrderFeignService orderFeignService;
+    private ProductOrderFeignService orderFeignSerivce;
 
     @Override
     public Map<String, Object> page(int page, int size) {
@@ -110,14 +110,12 @@ public class CouponRecordServiceImpl implements CouponRecordService {
     @Override
     public JsonData lockCouponRecords(LockCouponRecordRequest recordRequest) {
 
-        //获取当前用户
         LoginUser loginUser = LoginInterceptor.threadLocal.get();
 
-        //获取订单号和优惠券列表
         String orderOutTradeNo = recordRequest.getOrderOutTradeNo();
         List<Long> lockCouponRecordIds = recordRequest.getLockCouponRecordIds();
 
-        //更新个人优惠券记录表里的优惠券状态
+
         int updateRows = couponRecordMapper.lockUseStateBatch(loginUser.getId(), CouponStateEnum.USED.name(), lockCouponRecordIds);
 
         List<CouponTaskDO> couponTaskDOList = lockCouponRecordIds.stream().map(obj -> {
@@ -129,15 +127,15 @@ public class CouponRecordServiceImpl implements CouponRecordService {
             return couponTaskDO;
         }).collect(Collectors.toList());
 
-        //task表 新增优惠券记录
         int insertRows = couponTaskMapper.insertBatch(couponTaskDOList);
 
         log.info("优惠券记录锁定updateRows={}", updateRows);
-        log.info("新增优惠券记录 task insertRows={}", insertRows);
+        log.info("新增优惠券记录task insertRows={}", insertRows);
 
-        //检验并发送延迟消息
-        if (lockCouponRecordIds.size() == updateRows && updateRows == insertRows) {
+
+        if (lockCouponRecordIds.size() == insertRows && insertRows == updateRows) {
             //发送延迟消息
+
             for (CouponTaskDO couponTaskDO : couponTaskDOList) {
                 CouponRecordMessage couponRecordMessage = new CouponRecordMessage();
                 couponRecordMessage.setOutTradeNo(orderOutTradeNo);
@@ -146,70 +144,69 @@ public class CouponRecordServiceImpl implements CouponRecordService {
                 rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(), rabbitMQConfig.getCouponReleaseDelayRoutingKey(), couponRecordMessage);
                 log.info("优惠券锁定消息发送成功:{}", couponRecordMessage.toString());
             }
-
+            return JsonData.buildSuccess();
         } else {
             throw new BizException(BizCodeEnum.COUPON_RECORD_LOCK_FAIL);
         }
-
-        return JsonData.buildSuccess();
     }
 
     /**
-     * 释放优惠券记录
-     * <p>
+     * 解锁优惠券记录
      * 1）查询task工作单是否存在
-     * 2）查询订单状态
+     * 2) 查询订单状态
      *
      * @param recordMessage
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRED)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public boolean releaseCouponRecord(CouponRecordMessage recordMessage) {
 
-        //查询task工作单是否存在
+        //查询下task是否存
         CouponTaskDO taskDO = couponTaskMapper.selectOne(new QueryWrapper<CouponTaskDO>().eq("id", recordMessage.getTaskId()));
 
         if (taskDO == null) {
-            log.warn("工作单不存在，消息:{}", recordMessage);
+            log.warn("工作单不存，消息:{}", recordMessage);
             return true;
         }
 
-        //Lock状态才处理
+        //lock状态才处理
         if (taskDO.getLockState().equalsIgnoreCase(StockTaskStateEnum.LOCK.name())) {
 
             //查询订单状态
-            JsonData jsonData = orderFeignService.queryProductOrderState(recordMessage.getOutTradeNo());
+            JsonData jsonData = orderFeignSerivce.queryProductOrderState(recordMessage.getOutTradeNo());
             if (jsonData.getCode() == 0) {
                 //正常响应，判断订单状态
                 String state = jsonData.getData().toString();
-                //状态是NEW新建状态，则返回给消息队列，重新处理
-                if(ProductOrderStateEnum.NEW.name().equalsIgnoreCase(state)){
-                    log.warn("订单状态是NEW，返回给消息队列，重新投递:{}",recordMessage);
+                if (ProductOrderStateEnum.NEW.name().equalsIgnoreCase(state)) {
+                    //状态是NEW新建状态，则返回给消息队，列重新投递
+                    log.warn("订单状态是NEW,返回给消息队列，重新投递:{}", recordMessage);
                     return false;
                 }
 
-                //如果是已经支付，修改task状态为finsh状态
-                if (ProductOrderStateEnum.PAY.name().equalsIgnoreCase(state)){
+                //如果是已经支付
+                if (ProductOrderStateEnum.PAY.name().equalsIgnoreCase(state)) {
+                    //如果已经支付，修改task状态为finish
                     taskDO.setLockState(StockTaskStateEnum.FINISH.name());
-                    couponTaskMapper.update(taskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
-                    log.info("订单已经支付，修改库存锁定工作单FINSH状态:{}",recordMessage);
+                    couponTaskMapper.update(taskDO, new QueryWrapper<CouponTaskDO>().eq("id", recordMessage.getTaskId()));
+                    log.info("订单已经支付，修改库存锁定工作单FINISH状态:{}", recordMessage);
                     return true;
                 }
             }
 
-            //订单不存在，或者订单被取消，确认消息，修改task状态为CACEL，恢复优惠券使用记录为NEW
-            log.info("订单不存在，或者订单被取消，确认消息，修改task状态为CACEL，恢复优惠券使用记录为NEW:{}",recordMessage);
+            //订单不存在，或者订单被取消，确认消息,修改task状态为CANCEL,恢复优惠券使用记录为NEW
+            log.warn("订单不存在，或者订单被取消，确认消息,修改task状态为CANCEL,恢复优惠券使用记录为NEW,message:{}", recordMessage);
             taskDO.setLockState(StockTaskStateEnum.CANCEL.name());
-            couponTaskMapper.update(taskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
 
-            //恢复优惠券状态为NEW状态
-            couponRecordMapper.updateState(taskDO.getCouponRecordId(),CouponStateEnum.NEW.name());
-            return true;
+            couponTaskMapper.update(taskDO, new QueryWrapper<CouponTaskDO>().eq("id", recordMessage.getTaskId()));
+            //恢复优惠券记录是NEW状态
+            couponRecordMapper.updateState(taskDO.getCouponRecordId(), CouponStateEnum.NEW.name());
+
         } else {
-            log.warn("工作单状态不是lock，state={},消息题={}", taskDO.getLockState(), recordMessage);
-            return true;
+            log.warn("工作单状态不是LOCK,state={},消息体={}", taskDO.getLockState(), recordMessage);
         }
+        return true;
+
 
     }
 

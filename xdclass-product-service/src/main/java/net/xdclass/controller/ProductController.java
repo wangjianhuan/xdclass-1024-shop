@@ -5,6 +5,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import net.xdclass.VO.ProductVO;
+import net.xdclass.request.LockProductRequest;
 import net.xdclass.service.ProductService;
 import net.xdclass.utils.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +41,25 @@ public class ProductController {
 
     @ApiOperation("商品详情")
     @GetMapping("/detail/{product_id}")
-    public JsonData detail(@ApiParam(value = "商品ID" ,required = true)@PathVariable("product_id") long productId) {
+    public JsonData detail(@ApiParam(value = "商品ID", required = true) @PathVariable("product_id") long productId) {
 
         ProductVO productVO = productService.findDetailById(productId);
         return JsonData.buildSuccess(productVO);
+    }
+
+    /**
+     * 商品库存锁定
+     *
+     * @return
+     */
+    @ApiOperation("商品库存锁定")
+    @PostMapping("lock_products")
+    public JsonData lockProducts(@ApiParam("商品库存锁定") @RequestBody LockProductRequest lockProductRequest) {
+
+        JsonData jsonData = productService.lockProductStock(lockProductRequest);
+
+        return jsonData;
+
     }
 }
 

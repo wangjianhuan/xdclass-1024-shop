@@ -10,14 +10,15 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @date 2021/7/23 下午9:49
  * @QQ 1151777592
  */
-@FeignClient(name = "xdclass-product-service")
+@FeignClient(name = "xdclass-order-service")
 public interface ProductOrderFeignService {
+
 
     /**
      * 查询订单状态
      * @param outTradeNo
      * @return
      */
-    @GetMapping("api/order/v1/query_state")
-    JsonData queryProductOrderState(@RequestParam("out-trade-no")String outTradeNo);
+    @GetMapping("/api/order/v1/query_state")
+    JsonData queryProductOrderState(@RequestParam("out_trade_no")String outTradeNo);
 }

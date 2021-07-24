@@ -41,42 +41,46 @@ public class ProductOrderController {
      */
     @ApiOperation("查询订单状态")
     @GetMapping("query_state")
-    private JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no") String outTradeNo) {
+    public JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no")String outTradeNo){
 
         String state = orderService.queryProductOrderState(outTradeNo);
 
-        return StringUtils.isNoneBlank(state) ? JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST) : JsonData.buildSuccess(state);
+        return StringUtils.isBlank(state)?JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST):JsonData.buildSuccess(state);
 
     }
 
     @ApiOperation("提交订单")
     @PostMapping("confirm")
-    public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response) {
+    public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response){
 
         JsonData jsonData = orderService.confirmOrder(orderRequest);
 
-        if (jsonData.getCode() == 0) {
+        if(jsonData.getCode() == 0){
 
             String client = orderRequest.getClientType();
             String payType = orderRequest.getPayType();
 
-            //如果是支付宝网页支付。都是跳转网页，APP除外
-            if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
-                log.info("创建订单成功:{}", orderRequest.toString());
-                if (client.equalsIgnoreCase(ClientType.H5.name())) {
-                    writeData(response, jsonData);
-                } else if (client.equalsIgnoreCase(ClientType.APP.name())) {
-                    //APP SDK支付   todo
+            //如果是支付宝网页支付，都是跳转网页，APP除外
+            if(payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())){
+
+                log.info("创建支付宝订单成功:{}",orderRequest.toString());
+
+                if(client.equalsIgnoreCase(ClientType.H5.name())){
+                    writeData(response,jsonData);
+
+                }else if(client.equalsIgnoreCase(ClientType.APP.name())){
+                    //APP SDK支付  TODO
                 }
 
-            } else if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())) {
-                //微信支付
-            } else if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.BANK.name())) {
-                //银行支付
+            } else if(payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())){
+
+                //微信支付 TODO
             }
 
         } else {
-            log.error("创建订单失败{}", jsonData.toString());
+
+            log.error("创建订单失败{}",jsonData.toString());
+
         }
     }
 
@@ -87,14 +91,14 @@ public class ProductOrderController {
      * @param jsonData
      */
     private void writeData(HttpServletResponse response, JsonData jsonData) {
-        try {
 
+        try {
             response.setContentType("text/html;charset=UTF8");
             response.getWriter().write(jsonData.getData().toString());
+            response.getWriter().flush();
             response.getWriter().close();
-
-        } catch (IOException e) {
-            log.error("写出html异常:{}", e);
+        }catch (IOException e){
+            log.error("写出Html异常：{}",e);
         }
     }
 }

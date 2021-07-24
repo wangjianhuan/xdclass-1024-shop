@@ -2,6 +2,7 @@ package net.xdclass.biz;
 
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.CouponApplication;
+import net.xdclass.model.CouponRecordMessage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -26,5 +27,14 @@ public class MQTest {
     public void sendDelayMsg(){
 
         rabbitTemplate.convertAndSend("coupon.event.exchange","coupon.release.delay.routing.key","我是大帅比");
+    }
+
+    @Test
+    public void testCouponRecordRelease(){
+        CouponRecordMessage couponRecordMessage = new CouponRecordMessage();
+        couponRecordMessage.setOutTradeNo("123456abc");
+        couponRecordMessage.setTaskId(1l);
+        rabbitTemplate.convertAndSend("coupon.event.exchange","coupon.release.delay.routing.key",couponRecordMessage);
+
     }
 }

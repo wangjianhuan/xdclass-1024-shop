@@ -173,6 +173,7 @@ public class CartServiceImpl implements CartService {
      * @param productIdList
      */
     private void setProductLatestPrice(List<CartItemVO> cartItemVOList, List<Long> productIdList) {
+
         List<ProductVO> productVOList = productService.findProductsByIdBatch(productIdList);
 
         //分组
