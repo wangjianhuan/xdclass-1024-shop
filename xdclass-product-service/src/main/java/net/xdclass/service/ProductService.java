@@ -1,6 +1,7 @@
 package net.xdclass.service;
 
 import net.xdclass.VO.ProductVO;
+import net.xdclass.model.ProductMessage;
 import net.xdclass.request.LockProductRequest;
 import net.xdclass.utils.JsonData;
 
@@ -37,4 +38,11 @@ public interface ProductService {
      * @return
      */
     JsonData lockProductStock(LockProductRequest lockProductRequest);
+
+    /**
+     * 释放商品库存
+     * @param productMessage
+     * @return
+     */
+    boolean releaseProductStock(ProductMessage productMessage);
 }
