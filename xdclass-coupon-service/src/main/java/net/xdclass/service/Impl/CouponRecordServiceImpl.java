@@ -6,10 +6,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.VO.CouponRecordVO;
 import net.xdclass.config.RabbitMQConfig;
-import net.xdclass.enums.BizCodeEnum;
-import net.xdclass.enums.CouponStateEnum;
-import net.xdclass.enums.StockTaskStateEnum;
+import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
+import net.xdclass.feign.ProductOrderFeignService;
 import net.xdclass.interceptor.LoginInterceptor;
 import net.xdclass.mapper.CouponRecordMapper;
 import net.xdclass.mapper.CouponTaskMapper;
@@ -24,6 +23,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -51,6 +52,9 @@ public class CouponRecordServiceImpl implements CouponRecordService {
 
     @Autowired
     private RabbitMQConfig rabbitMQConfig;
+
+    @Autowired
+    private ProductOrderFeignService orderFeignService;
 
     @Override
     public Map<String, Object> page(int page, int size) {
@@ -128,26 +132,85 @@ public class CouponRecordServiceImpl implements CouponRecordService {
         //task表 新增优惠券记录
         int insertRows = couponTaskMapper.insertBatch(couponTaskDOList);
 
-        log.info("优惠券记录锁定updateRows={}",updateRows);
-        log.info("新增优惠券记录 task insertRows={}",insertRows);
+        log.info("优惠券记录锁定updateRows={}", updateRows);
+        log.info("新增优惠券记录 task insertRows={}", insertRows);
 
         //检验并发送延迟消息
-        if (lockCouponRecordIds.size()==updateRows&&updateRows==insertRows){
+        if (lockCouponRecordIds.size() == updateRows && updateRows == insertRows) {
             //发送延迟消息
-            for (CouponTaskDO couponTaskDO: couponTaskDOList){
+            for (CouponTaskDO couponTaskDO : couponTaskDOList) {
                 CouponRecordMessage couponRecordMessage = new CouponRecordMessage();
                 couponRecordMessage.setOutTradeNo(orderOutTradeNo);
                 couponRecordMessage.setTaskId(couponTaskDO.getId());
 
-                rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(),rabbitMQConfig.getCouponReleaseDelayRoutingKey(),couponRecordMessage);
-                log.info("优惠券锁定消息发送成功:{}",couponRecordMessage.toString());
+                rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(), rabbitMQConfig.getCouponReleaseDelayRoutingKey(), couponRecordMessage);
+                log.info("优惠券锁定消息发送成功:{}", couponRecordMessage.toString());
             }
 
-        }else {
+        } else {
             throw new BizException(BizCodeEnum.COUPON_RECORD_LOCK_FAIL);
         }
 
         return JsonData.buildSuccess();
+    }
+
+    /**
+     * 释放优惠券记录
+     * <p>
+     * 1）查询task工作单是否存在
+     * 2）查询订单状态
+     *
+     * @param recordMessage
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRED)
+    public boolean releaseCouponRecord(CouponRecordMessage recordMessage) {
+
+        //查询task工作单是否存在
+        CouponTaskDO taskDO = couponTaskMapper.selectOne(new QueryWrapper<CouponTaskDO>().eq("id", recordMessage.getTaskId()));
+
+        if (taskDO == null) {
+            log.warn("工作单不存在，消息:{}", recordMessage);
+            return true;
+        }
+
+        //Lock状态才处理
+        if (taskDO.getLockState().equalsIgnoreCase(StockTaskStateEnum.LOCK.name())) {
+
+            //查询订单状态
+            JsonData jsonData = orderFeignService.queryProductOrderState(recordMessage.getOutTradeNo());
+            if (jsonData.getCode() == 0) {
+                //正常响应，判断订单状态
+                String state = jsonData.getData().toString();
+                //状态是NEW新建状态，则返回给消息队列，重新处理
+                if(ProductOrderStateEnum.NEW.name().equalsIgnoreCase(state)){
+                    log.warn("订单状态是NEW，返回给消息队列，重新投递:{}",recordMessage);
+                    return false;
+                }
+
+                //如果是已经支付，修改task状态为finsh状态
+                if (ProductOrderStateEnum.PAY.name().equalsIgnoreCase(state)){
+                    taskDO.setLockState(StockTaskStateEnum.FINISH.name());
+                    couponTaskMapper.update(taskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
+                    log.info("订单已经支付，修改库存锁定工作单FINSH状态:{}",recordMessage);
+                    return true;
+                }
+            }
+
+            //订单不存在，或者订单被取消，确认消息，修改task状态为CACEL，恢复优惠券使用记录为NEW
+            log.info("订单不存在，或者订单被取消，确认消息，修改task状态为CACEL，恢复优惠券使用记录为NEW:{}",recordMessage);
+            taskDO.setLockState(StockTaskStateEnum.CANCEL.name());
+            couponTaskMapper.update(taskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
+
+            //恢复优惠券状态为NEW状态
+            couponRecordMapper.updateState(taskDO.getCouponRecordId(),CouponStateEnum.NEW.name());
+            return true;
+        } else {
+            log.warn("工作单状态不是lock，state={},消息题={}", taskDO.getLockState(), recordMessage);
+            return true;
+        }
+
     }
 
     private CouponRecordVO beanProcess(CouponRecordDO couponRecordDO) {

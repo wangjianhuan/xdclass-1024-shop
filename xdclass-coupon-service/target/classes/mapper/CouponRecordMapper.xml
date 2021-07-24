@@ -33,5 +33,14 @@
 
     </update>
 
+    <!--  更新优惠券使用状态  -->
+    <update id="updateState">
+
+        update coupon_record
+        set user_state = #{state}
+        where id = #{couponRecordId};
+
+    </update>
+
 
 </mapper>
