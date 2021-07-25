@@ -50,7 +50,7 @@ public class AddressController {
      */
     @ApiOperation("根据id查找地址详情")
     @GetMapping("find/{address_id}")
-    public Object detail(@ApiParam(value = "地址id",required = true) @PathVariable("address_id") Long addressId){
+    public JsonData detail(@ApiParam(value = "地址id",required = true) @PathVariable("address_id") Long addressId){
 
         AddressVO addressVO = addressService.detail(addressId);
         return addressVO==null?JsonData.buildResult(BizCodeEnum.ADDRESS_NO_EXITS):JsonData.buildSuccess(addressVO);
