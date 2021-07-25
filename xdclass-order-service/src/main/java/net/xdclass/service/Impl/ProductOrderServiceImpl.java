@@ -3,9 +3,11 @@ package net.xdclass.service.Impl;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.VO.OrderItemVO;
 import net.xdclass.VO.ProductOrderAddressVO;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.exception.BizException;
+import net.xdclass.feign.ProductFeignService;
 import net.xdclass.feign.UserFeignService;
 import net.xdclass.interceptor.LoginInterceptor;
 import net.xdclass.mapper.ProductOrderMapper;
@@ -17,6 +19,8 @@ import net.xdclass.utils.CommonUtil;
 import net.xdclass.utils.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author WJH
@@ -32,6 +36,9 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Autowired
     private UserFeignService userFeignService;
+
+    @Autowired
+    private ProductFeignService productFeignService;
 
     /**
      * 创建订单
@@ -60,6 +67,17 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
         ProductOrderAddressVO addressVO = this.getUserAddress(orderRequest.getAddressId());
         log.info("收货地址信息:{}",addressVO);
+
+        //获取用户加入购物车的商品
+        List<Long> productIdList = orderRequest.getProductIdList();
+
+        JsonData cartItemDate = productFeignService.confirmOrderCartItem(productIdList);
+        List<OrderItemVO> orderItemList  = cartItemDate.getData(new TypeReference<>(){});
+        log.info("获取的商品:{}",orderItemList);
+        if(orderItemList == null){
+            //购物车商品不存在
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_CART_ITEM_NOT_EXIST);
+        }
 
         return null;
     }
