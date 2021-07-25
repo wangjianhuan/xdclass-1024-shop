@@ -3,10 +3,13 @@ package net.xdclass.service.Impl;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.VO.CouponRecordVO;
 import net.xdclass.VO.OrderItemVO;
 import net.xdclass.VO.ProductOrderAddressVO;
 import net.xdclass.enums.BizCodeEnum;
+import net.xdclass.enums.CouponStateEnum;
 import net.xdclass.exception.BizException;
+import net.xdclass.feign.CouponFeignService;
 import net.xdclass.feign.ProductFeignService;
 import net.xdclass.feign.UserFeignService;
 import net.xdclass.interceptor.LoginInterceptor;
@@ -20,6 +23,7 @@ import net.xdclass.utils.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -39,6 +43,9 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Autowired
     private ProductFeignService productFeignService;
+
+    @Autowired
+    private CouponFeignService couponFeignService;
 
     /**
      * 创建订单
@@ -66,20 +73,118 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         String orderOutTradeNo = CommonUtil.getStringNumRandom(32);
 
         ProductOrderAddressVO addressVO = this.getUserAddress(orderRequest.getAddressId());
-        log.info("收货地址信息:{}",addressVO);
+        log.info("收货地址信息:{}", addressVO);
 
         //获取用户加入购物车的商品
         List<Long> productIdList = orderRequest.getProductIdList();
 
         JsonData cartItemDate = productFeignService.confirmOrderCartItem(productIdList);
-        List<OrderItemVO> orderItemList  = cartItemDate.getData(new TypeReference<>(){});
-        log.info("获取的商品:{}",orderItemList);
-        if(orderItemList == null){
+        List<OrderItemVO> orderItemList = cartItemDate.getData(new TypeReference<>() {
+        });
+        log.info("获取的商品:{}", orderItemList);
+        if (orderItemList == null) {
             //购物车商品不存在
             throw new BizException(BizCodeEnum.ORDER_CONFIRM_CART_ITEM_NOT_EXIST);
         }
 
+        //验证价格，减去商品优惠券
+        this.checkPrice(orderItemList, orderRequest);
+        log.info("验价成功！");
+
         return null;
+    }
+
+    /**
+     * 验证价格
+     * *统计全部商品的价格
+     * *获取优惠券（判断是否满足优惠券的条件），总价再减去优惠券的价格 就是 最终的价格
+     *
+     * @param orderItemList
+     * @param orderRequest
+     */
+    private void checkPrice(List<OrderItemVO> orderItemList, ConfirmOrderRequest orderRequest) {
+
+        //统计商品的总价
+        BigDecimal realPayAmount = new BigDecimal("0");
+        if (orderItemList != null) {
+            for (OrderItemVO orderItemVO : orderItemList) {
+                BigDecimal itemRealPayAmount = orderItemVO.getTotalAmount();
+                realPayAmount = realPayAmount.add(itemRealPayAmount);
+            }
+        }
+
+        //获取优惠券，判断是否可以使用
+        CouponRecordVO couponRecordVO = getCartCouponRecord(orderRequest.getCouponRecordId());
+
+        //计算购物车价格是否满足购物车满减条件
+        if (couponRecordVO != null) {
+
+            //计算是否满足满减
+            if (realPayAmount.compareTo(couponRecordVO.getConditionPrice()) < 0) {
+                throw new BizException(BizCodeEnum.ORDER_CONFIRM_COUPON_FAIL);
+            }
+
+            if (couponRecordVO.getPrice().compareTo(realPayAmount) > 0) {
+                realPayAmount = BigDecimal.ZERO;
+            } else {
+                realPayAmount = realPayAmount.subtract(couponRecordVO.getPrice());
+            }
+        }
+
+        if (realPayAmount.compareTo(orderRequest.getRealAmount()) != 0) {
+            log.error("订单验价失败:前端价格:{}，后端价格:{}", orderRequest.getRealAmount(), realPayAmount);
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_PRICE_FAIL);
+        }
+    }
+
+    /**
+     * 获取优惠券
+     *
+     * @param couponRecordId
+     * @return
+     */
+    private CouponRecordVO getCartCouponRecord(Long couponRecordId) {
+
+        if (couponRecordId == null || couponRecordId < 0) {
+            return null;
+        }
+
+        JsonData couponData = couponFeignService.findUserCouponRecordById(couponRecordId);
+
+        if (couponData.getCode() != 0) {
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_COUPON_FAIL);
+        }
+
+        if (couponData.getCode() == 0) {
+
+            CouponRecordVO couponRecordVO = couponData.getData(new TypeReference<>() {
+            });
+            if (!couponAvailable(couponRecordVO)) {
+                log.error("优惠券使用失败");
+                throw new BizException(BizCodeEnum.COUPON_UNAVAILABLE);
+            }
+            return couponRecordVO;
+        }
+        return null;
+    }
+
+    /**
+     * 判断优惠券是否可用
+     *
+     * @param couponRecordVO
+     * @return
+     */
+    private boolean couponAvailable(CouponRecordVO couponRecordVO) {
+
+        if (couponRecordVO.getUseState().equalsIgnoreCase(CouponStateEnum.NEW.name())) {
+            long currentTimestamp = CommonUtil.getCurrentTimestamp();
+            Long endTime = couponRecordVO.getEndTime().getTime();
+            Long startTime = couponRecordVO.getStartTime().getTime();
+            if (currentTimestamp <= endTime && currentTimestamp >= startTime) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -93,7 +198,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         JsonData addressData = userFeignService.detail(addressId);
 
         if (addressData.getCode() != 0) {
-            log.error("获取收货地址失败:{}",addressData);
+            log.error("获取收货地址失败:{}", addressData);
             throw new BizException(BizCodeEnum.ADDRESS_NO_EXITS);
         }
 

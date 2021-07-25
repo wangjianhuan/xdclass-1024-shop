@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 
 
+/**
+ * @author wjh
+ */
 public class OrderItemVO {
 
     /**
