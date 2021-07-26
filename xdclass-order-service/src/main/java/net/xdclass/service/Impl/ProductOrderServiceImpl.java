@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.VO.CouponRecordVO;
 import net.xdclass.VO.OrderItemVO;
 import net.xdclass.VO.ProductOrderAddressVO;
+import net.xdclass.config.RabbitMQConfig;
 import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
 import net.xdclass.feign.CouponFeignService;
@@ -16,6 +17,7 @@ import net.xdclass.interceptor.LoginInterceptor;
 import net.xdclass.mapper.ProductOrderItemMapper;
 import net.xdclass.mapper.ProductOrderMapper;
 import net.xdclass.model.LoginUser;
+import net.xdclass.model.OrderMessage;
 import net.xdclass.model.ProductOrderDO;
 import net.xdclass.model.ProductOrderItemDO;
 import net.xdclass.request.ConfirmOrderRequest;
@@ -25,6 +27,7 @@ import net.xdclass.request.OrderItemRequest;
 import net.xdclass.service.ProductOrderService;
 import net.xdclass.utils.CommonUtil;
 import net.xdclass.utils.JsonData;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +60,12 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Autowired
     private ProductOrderItemMapper orderItemMapper;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RabbitMQConfig rabbitMQConfig;
 
     /**
      * 创建订单
@@ -115,6 +124,9 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         this.saveProductOrderItems(orderOutTradeNo,productOrderDO.getId(),orderItemList);
 
         //发送延迟消息，用于自动关闭订单 todo
+        OrderMessage orderMessage = new OrderMessage();
+        orderMessage.setOutTradeNo(orderOutTradeNo);
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(),rabbitMQConfig.getOrderCloseDelayRoutingKey(),orderMessage);
 
         //创建支付 todo
 
