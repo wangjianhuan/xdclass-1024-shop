@@ -1,11 +1,19 @@
 package net.xdclass.config;
 
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+
 /**
  * @author WJH
  * @date 2021/7/26 下午7:16
  * @QQ 1151777592
  */
 public class AliPayConfig {
+
+    /**
+     * 支付宝网关
+     */
+    public static final String PAY_GATEWAY = "https://openapi.alipaydev.com/gateway.do";
 
     /**
      * 支付宝 APPID
@@ -32,5 +40,33 @@ public class AliPayConfig {
      */
     public static final String CHARSET = "UTF-8";
 
+    /**
+     * 返回参数的格式
+     */
+    public static final String FORMAT = "json";
+
+    /**
+     * 构造方法私有化
+     */
     private AliPayConfig(){}
+
+    private volatile static AlipayClient instance = null;
+
+    /**
+     * 获取instance
+     * 单例模式 懒汉式 双重否定
+     * @return
+     */
+    public static AlipayClient getInstance(){
+
+        if (instance==null){
+            synchronized (AliPayConfig.class){
+                if (instance==null){
+                    instance = new DefaultAlipayClient(PAY_GATEWAY,APPID,APP_PRI_KEY,FORMAT,CHARSET,ALIPAY_PUB_KEY,SIGN_TYPE);
+                }
+            }
+        }
+        return instance;
+    }
+
 }
