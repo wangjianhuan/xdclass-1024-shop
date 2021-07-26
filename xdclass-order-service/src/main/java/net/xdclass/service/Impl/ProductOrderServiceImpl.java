@@ -27,6 +27,7 @@ import net.xdclass.request.OrderItemRequest;
 import net.xdclass.service.ProductOrderService;
 import net.xdclass.utils.CommonUtil;
 import net.xdclass.utils.JsonData;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -121,12 +122,12 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         ProductOrderDO productOrderDO = this.saveProductOrder(orderRequest, loginUser, orderOutTradeNo, addressVO);
 
         //创建订单项
-        this.saveProductOrderItems(orderOutTradeNo,productOrderDO.getId(),orderItemList);
+        this.saveProductOrderItems(orderOutTradeNo, productOrderDO.getId(), orderItemList);
 
         //发送延迟消息，用于自动关闭订单 todo
         OrderMessage orderMessage = new OrderMessage();
         orderMessage.setOutTradeNo(orderOutTradeNo);
-        rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(),rabbitMQConfig.getOrderCloseDelayRoutingKey(),orderMessage);
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(), rabbitMQConfig.getOrderCloseDelayRoutingKey(), orderMessage);
 
         //创建支付 todo
 
@@ -135,6 +136,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     /**
      * 新增订单项
+     *
      * @param orderOutTradeNo
      * @param orderId
      * @param orderItemList
@@ -164,6 +166,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     /**
      * 创建订单
+     *
      * @param orderRequest
      * @param loginUser
      * @param orderOutTradeNo
@@ -377,5 +380,45 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         } else {
             return productOrderDO.getState();
         }
+    }
+
+    /**
+     * 关单队列监听 定时关单
+     *
+     * @param orderMessage
+     * @return
+     */
+    @Override
+    public boolean closeProductOrder(OrderMessage orderMessage) {
+
+        ProductOrderDO productOrderDO = productOrderMapper.selectOne(new QueryWrapper<ProductOrderDO>().eq("out_trade_no", orderMessage.getOutTradeNo()));
+
+        if (productOrderDO == null) {
+            //订单不存在
+            log.warn("直接确认消息，订单不存在：{}",orderMessage);
+            return true;
+        }
+
+        if (productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.PAY.name())){
+            //已经支付
+            log.info("直接确认消息，订单已经支付：{}",orderMessage);
+        }
+
+        //向三方支付查询是否真的未支付  todo
+
+        String payResult = "";
+
+        //结果为空，则未支付，本地取消订单
+        if(StringUtils.isNoneBlank(payResult)){
+            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(),ProductOrderStateEnum.CANCEL.name(),ProductOrderStateEnum.NEW.name());
+            log.info("结果为空，则未支付，本地取消订单:{}",orderMessage);
+            return true;
+        }else {
+            //支付成功，主动讲订单状态改为已经支付，造成原因可能是支付回调有问题
+            log.warn("支付成功，主动讲订单状态改为已经支付，造成原因可能是支付回调有问题:{}",orderMessage);
+            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(),ProductOrderStateEnum.PAY.name(),ProductOrderStateEnum.NEW.name());
+            return true;
+        }
+
     }
 }
