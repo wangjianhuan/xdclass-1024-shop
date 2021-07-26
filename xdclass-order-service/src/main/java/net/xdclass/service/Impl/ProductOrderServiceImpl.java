@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.VO.CouponRecordVO;
 import net.xdclass.VO.OrderItemVO;
 import net.xdclass.VO.ProductOrderAddressVO;
+import net.xdclass.component.PayFactory;
 import net.xdclass.config.RabbitMQConfig;
 import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
@@ -67,6 +68,9 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Autowired
     private RabbitMQConfig rabbitMQConfig;
+
+    @Autowired
+    private PayFactory payFactory;
 
     /**
      * 创建订单
@@ -130,6 +134,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(), rabbitMQConfig.getOrderCloseDelayRoutingKey(), orderMessage);
 
         //创建支付 todo
+        //payFactory.pay();
 
         return null;
     }
@@ -395,13 +400,13 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
         if (productOrderDO == null) {
             //订单不存在
-            log.warn("直接确认消息，订单不存在：{}",orderMessage);
+            log.warn("直接确认消息，订单不存在：{}", orderMessage);
             return true;
         }
 
-        if (productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.PAY.name())){
+        if (productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.PAY.name())) {
             //已经支付
-            log.info("直接确认消息，订单已经支付：{}",orderMessage);
+            log.info("直接确认消息，订单已经支付：{}", orderMessage);
         }
 
         //向三方支付查询是否真的未支付  todo
@@ -409,14 +414,14 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         String payResult = "";
 
         //结果为空，则未支付，本地取消订单
-        if(StringUtils.isNoneBlank(payResult)){
-            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(),ProductOrderStateEnum.CANCEL.name(),ProductOrderStateEnum.NEW.name());
-            log.info("结果为空，则未支付，本地取消订单:{}",orderMessage);
+        if (StringUtils.isNoneBlank(payResult)) {
+            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(), ProductOrderStateEnum.CANCEL.name(), ProductOrderStateEnum.NEW.name());
+            log.info("结果为空，则未支付，本地取消订单:{}", orderMessage);
             return true;
-        }else {
+        } else {
             //支付成功，主动讲订单状态改为已经支付，造成原因可能是支付回调有问题
-            log.warn("支付成功，主动讲订单状态改为已经支付，造成原因可能是支付回调有问题:{}",orderMessage);
-            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(),ProductOrderStateEnum.PAY.name(),ProductOrderStateEnum.NEW.name());
+            log.warn("支付成功，主动讲订单状态改为已经支付，造成原因可能是支付回调有问题:{}", orderMessage);
+            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(), ProductOrderStateEnum.PAY.name(), ProductOrderStateEnum.NEW.name());
             return true;
         }
 
