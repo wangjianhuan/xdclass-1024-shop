@@ -1,8 +1,11 @@
 package net.xdclass.service;
 
+import net.xdclass.enums.ProductOrderPayTypeEnum;
 import net.xdclass.model.OrderMessage;
 import net.xdclass.request.ConfirmOrderRequest;
 import net.xdclass.utils.JsonData;
+
+import java.util.Map;
 
 /**
  * @author WJH
@@ -43,4 +46,12 @@ public interface ProductOrderService {
      * @return
      */
     boolean closeProductOrder(OrderMessage orderMessage);
+
+    /**
+     * 处理支付结果回调通知
+     * @param alipay
+     * @param paramsMap
+     * @return
+     */
+    JsonData handlerOrderCallbackMsg(ProductOrderPayTypeEnum alipay, Map<String, String> paramsMap);
 }

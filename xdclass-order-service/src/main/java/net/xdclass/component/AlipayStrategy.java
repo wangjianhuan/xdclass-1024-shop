@@ -3,8 +3,10 @@ package net.xdclass.component;
 import com.alibaba.fastjson.JSON;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.request.AlipayTradePagePayRequest;
+import com.alipay.api.request.AlipayTradeQueryRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.response.AlipayTradePagePayResponse;
+import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.alipay.api.response.AlipayTradeWapPayResponse;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.VO.PayInfoVO;
@@ -108,8 +110,46 @@ public class AlipayStrategy implements PayStrategy {
         return null;
     }
 
+    /**
+     * 查询订单状态
+     * 支付成功 返回非空
+     * 其他返回空
+     *
+     * 未支付
+     * {"alipay_trade_query_response":{"code":"40004","msg":"Business Failed","sub_code":"ACQ.TRADE_NOT_EXIST","sub_msg":"交易不存在","buyer_pay_amount":"0.00","invoice_amount":"0.00","out_trade_no":"adbe8e8f-3b18-4c9e-b736-02c4c2e15eca","point_amount":"0.00","receipt_amount":"0.00"},"sign":"xxxxx"}
+     *
+     * 已经支付
+     *{"alipay_trade_query_response":{"code":"10000","msg":"Success","buyer_logon_id":"mqv***@sandbox.com","buyer_pay_amount":"0.00","buyer_user_id":"2088102176996700","buyer_user_type":"PRIVATE","invoice_amount":"0.00","out_trade_no":"adbe8e8f-3b18-4c9e-b736-02c4c2e15eca","point_amount":"0.00","receipt_amount":"0.00","send_pay_date":"2020-12-04 17:06:47","total_amount":"111.99","trade_no":"2020120422001496700501648498","trade_status":"TRADE_SUCCESS"},"sign":"xxxx"}
+     *
+     *  @param payInfoVO
+     * @return
+     */
     @Override
     public String queryPaySuccess(PayInfoVO payInfoVO) {
-        return null;
+
+
+        AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+        HashMap<String,String > content = new HashMap<>();
+
+        //订单商户号,64位
+        content.put("out_trade_no",payInfoVO.getOutTradeNo());
+        request.setBizContent(JSON.toJSONString(content));
+
+        AlipayTradeQueryResponse response = null;
+        try {
+            response = AliPayConfig.getInstance().execute(request);
+            log.info("支付宝订单查询响应：{}",response.getBody());
+
+        } catch (AlipayApiException e) {
+            log.error("支付宝订单查询异常:{}",e);
+        }
+
+        if(response.isSuccess()){
+            log.info("支付宝订单状态查询成功:{}",payInfoVO);
+            return response.getTradeStatus();
+        }else {
+            log.warn("支付宝订单状态查询失败:{}",payInfoVO);
+            return "";
+        }
     }
 }
