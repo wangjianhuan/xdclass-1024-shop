@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.VO.CouponRecordVO;
 import net.xdclass.VO.OrderItemVO;
+import net.xdclass.VO.PayInfoVO;
 import net.xdclass.VO.ProductOrderAddressVO;
 import net.xdclass.component.PayFactory;
 import net.xdclass.config.RabbitMQConfig;
+import net.xdclass.constant.TimeConstant;
 import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
 import net.xdclass.feign.CouponFeignService;
@@ -39,6 +41,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static net.xdclass.constant.TimeConstant.ORDER_PAY_TIMEOUT_MILLS;
 
 /**
  * @author WJH
@@ -134,10 +138,19 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         orderMessage.setOutTradeNo(orderOutTradeNo);
         rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(), rabbitMQConfig.getOrderCloseDelayRoutingKey(), orderMessage);
 
-        //创建支付 todo
-        //payFactory.pay();
+        //创建支付
+        PayInfoVO payInfoVO = new PayInfoVO(orderOutTradeNo,
+                productOrderDO.getPayAmount(), orderRequest.getPayType(),
+                orderRequest.getClientType(), "orderOutTradeNo", "", TimeConstant.ORDER_PAY_TIMEOUT_MILLS);
 
-        return null;
+        String payResult = payFactory.pay(payInfoVO);
+        if (StringUtils.isNoneBlank(payResult)) {
+            log.error("创建订单成功:payinfo={},paysult={}", payInfoVO, payResult);
+            return JsonData.buildSuccess(payResult);
+        } else {
+            log.error("创建订单失败:payinfo={},paysult={}", payInfoVO, payResult);
+            return JsonData.buildResult(BizCodeEnum.PAY_ORDER_FAIL);
+        }
     }
 
     /**
@@ -410,9 +423,11 @@ public class ProductOrderServiceImpl implements ProductOrderService {
             log.info("直接确认消息，订单已经支付：{}", orderMessage);
         }
 
-        //向三方支付查询是否真的未支付  todo
-
-        String payResult = "";
+        //向三方支付查询是否真的未支付
+        PayInfoVO payInfoVO = new PayInfoVO();
+        payInfoVO.setPayType(productOrderDO.getPayType());
+        payInfoVO.setOutTradeNo(orderMessage.getOutTradeNo());
+        String payResult = payFactory.queryPaySuccess(payInfoVO);
 
         //结果为空，则未支付，本地取消订单
         if (StringUtils.isNoneBlank(payResult)) {
@@ -431,27 +446,27 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     /**
      * 处理支付结果回调通知
      *
-     * @param alipay
+     * @param payType
      * @param paramsMap
      * @return
      */
     @Override
     public JsonData handlerOrderCallbackMsg(ProductOrderPayTypeEnum payType, Map<String, String> paramsMap) {
 
-        if(payType.name().equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())){
+        if (payType.name().equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
             //支付宝支付
             //获取商户订单号
             String outTradeNo = paramsMap.get("out_trade_no");
             //交易的状态
             String tradeStatus = paramsMap.get("trade_status");
 
-            if("TRADE_SUCCESS".equalsIgnoreCase(tradeStatus) || "TRADE_FINISHED".equalsIgnoreCase(tradeStatus)){
+            if ("TRADE_SUCCESS".equalsIgnoreCase(tradeStatus) || "TRADE_FINISHED".equalsIgnoreCase(tradeStatus)) {
                 //更新订单状态
-                productOrderMapper.updateOrderPayState(outTradeNo,ProductOrderStateEnum.PAY.name(),ProductOrderStateEnum.NEW.name());
+                productOrderMapper.updateOrderPayState(outTradeNo, ProductOrderStateEnum.PAY.name(), ProductOrderStateEnum.NEW.name());
                 return JsonData.buildSuccess();
             }
 
-        } else if(payType.name().equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())){
+        } else if (payType.name().equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())) {
             //微信支付  TODO
         }
 
