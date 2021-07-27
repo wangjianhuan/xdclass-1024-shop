@@ -73,5 +73,5 @@ alipay:
   #支付成功跳转页面
   success_return_url: https://gitee.com/wang-jianhuan/xdclass-1024-shop.git
   #支付宝通知回调接口
-  callback_url: http://1024.ngrok2.xiaomiqiu.cn/api/order-server/api/callback/order/v1/alipay
+  callback_url: http://1024.ngrok2.xiaomiqiu.cn/api/callback/order/v1/alipay
 

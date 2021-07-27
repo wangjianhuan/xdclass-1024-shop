@@ -24,10 +24,8 @@
     <!--  锁定商品库存  -->
     <update id="lockProductStock">
 
-        update product
-        set lock_stock = lock_stock + #{buy_num}
-        where id #{product_id}
-        and stock-lock_stock >= #{buy_num}
+        update product set lock_stock = lock_stock + #{buyNum}
+        where id = #{productId} and stock - lock_stock>=#{buyNum}
 
     </update>
 

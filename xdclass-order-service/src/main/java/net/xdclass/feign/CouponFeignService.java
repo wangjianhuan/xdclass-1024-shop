@@ -21,7 +21,7 @@ public interface CouponFeignService {
      * @param recordId
      * @return
      */
-    @GetMapping("/api/coupon-record/v1/detail/{record_id}")
+    @GetMapping("/api/coupon_record/v1/detail/{record_id}")
     JsonData findUserCouponRecordById(@PathVariable("record_id") long recordId);
 
     /**

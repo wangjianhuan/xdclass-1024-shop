@@ -26,7 +26,7 @@ public class ConfirmOrderRequest {
      * 最终购买的商品列表
      * 传递ID，购买数量从购物车中读取
      */
-    @JsonProperty("product_id_list")
+    @JsonProperty("product_ids")
     private List<Long> productIdList;
 
     /**
@@ -58,6 +58,6 @@ public class ConfirmOrderRequest {
      * 如果用了优惠券，则是减去优惠券的价格
      * 如果没有优惠券，则是和totalAmount价格一样
      */
-    @JsonProperty("real_amount")
+    @JsonProperty("real_pay_amount")
     private BigDecimal realAmount;
 }

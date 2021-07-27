@@ -145,7 +145,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
         String payResult = payFactory.pay(payInfoVO);
         if (StringUtils.isNoneBlank(payResult)) {
-            log.error("创建订单成功:payinfo={},paysult={}", payInfoVO, payResult);
+            log.info("创建订单成功:payinfo={},paysult={}", payInfoVO, payResult);
             return JsonData.buildSuccess(payResult);
         } else {
             log.error("创建订单失败:payinfo={},paysult={}", payInfoVO, payResult);
