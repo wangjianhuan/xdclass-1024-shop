@@ -2,10 +2,7 @@ package net.xdclass.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alipay.api.AlipayApiException;
-import com.alipay.api.request.AlipayTradeAppPayRequest;
-import com.alipay.api.request.AlipayTradePayRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
-import com.alipay.api.response.AlipayTradeAppPayResponse;
 import com.alipay.api.response.AlipayTradeWapPayResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -13,20 +10,28 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.config.AliPayConfig;
 import net.xdclass.config.PayUrlConfig;
+import net.xdclass.constant.CacheKey;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.ClientType;
 import net.xdclass.enums.ProductOrderPayTypeEnum;
+import net.xdclass.interceptor.LoginInterceptor;
+import net.xdclass.model.LoginUser;
 import net.xdclass.request.ConfirmOrderRequest;
+import net.xdclass.request.RepayOrderRequest;
 import net.xdclass.service.ProductOrderService;
+import net.xdclass.utils.CommonUtil;
 import net.xdclass.utils.JsonData;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -46,6 +51,40 @@ public class ProductOrderController {
     @Autowired
     private PayUrlConfig payUrlConfig;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @ApiOperation("获取提交订单令牌")
+    @GetMapping("get_token")
+    public JsonData getOrderToken() {
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+
+        String key = String.format(CacheKey.SUBMIT_ORDER_TOKEN_KEY, loginUser.getId());
+        String token = CommonUtil.getStringNumRandom(32);
+        redisTemplate.opsForValue().set(key, token,30, TimeUnit.MILLISECONDS);
+
+        return JsonData.buildSuccess(token);
+    }
+
+    /**
+     * 分页查询我的订单
+     *
+     * @param page
+     * @param size
+     * @param state
+     * @return
+     */
+    @ApiOperation("分页查询我的订单")
+    @GetMapping("page")
+    public JsonData findOrderList(
+            @ApiParam(value = "当前页") @RequestParam(value = "page", defaultValue = "1") int page,
+            @ApiParam(value = "每页显示多少条") @RequestParam(value = "size", defaultValue = "10") int size,
+            @ApiParam(value = "订单状态") @RequestParam(value = "state", defaultValue = "NEW") String state
+    ) {
+        Map<String, Object> pageResult = orderService.page(page, size, state);
+        return JsonData.buildSuccess(pageResult);
+    }
+
     /**
      * 查询订单状态
      * 此接口RPC调用 没有登录拦截，如果需要可以增加秘钥加密
@@ -55,45 +94,82 @@ public class ProductOrderController {
      */
     @ApiOperation("查询订单状态")
     @GetMapping("query_state")
-    public JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no")String outTradeNo){
+    public JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no") String outTradeNo) {
 
         String state = orderService.queryProductOrderState(outTradeNo);
 
-        return StringUtils.isBlank(state)?JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST):JsonData.buildSuccess(state);
+        return StringUtils.isBlank(state) ? JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST) : JsonData.buildSuccess(state);
 
     }
 
     @ApiOperation("提交订单")
     @PostMapping("confirm")
-    public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response){
+    public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response) {
 
         JsonData jsonData = orderService.confirmOrder(orderRequest);
 
-        if(jsonData.getCode() == 0){
+        if (jsonData.getCode() == 0) {
 
             String client = orderRequest.getClientType();
             String payType = orderRequest.getPayType();
 
             //如果是支付宝网页支付，都是跳转网页，APP除外
-            if(payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())){
+            if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
 
-                log.info("创建支付宝订单成功:{}",orderRequest.toString());
+                log.info("创建支付宝订单成功:{}", orderRequest.toString());
 
-                if(client.equalsIgnoreCase(ClientType.H5.name())){
-                    writeData(response,jsonData);
+                if (client.equalsIgnoreCase(ClientType.H5.name())) {
+                    writeData(response, jsonData);
 
-                }else if(client.equalsIgnoreCase(ClientType.APP.name())){
+                } else if (client.equalsIgnoreCase(ClientType.APP.name())) {
                     //APP SDK支付  TODO
                 }
 
-            } else if(payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())){
+            } else if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())) {
 
                 //微信支付 TODO
             }
 
         } else {
 
-            log.error("创建订单失败{}",jsonData.toString());
+            log.error("创建订单失败{}", jsonData.toString());
+            CommonUtil.sendJsonMessage(response, jsonData);
+
+        }
+    }
+
+    @ApiOperation("重新支付订单")
+    @PostMapping("repay")
+    public void repay(@ApiParam("订单对象") @RequestBody RepayOrderRequest repayOrderRequest, HttpServletResponse response) {
+
+        JsonData jsonData = orderService.repay(repayOrderRequest);
+
+        if (jsonData.getCode() == 0) {
+
+            String client = repayOrderRequest.getClientType();
+            String payType = repayOrderRequest.getPayType();
+
+            //如果是支付宝网页支付，都是跳转网页，APP除外
+            if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
+
+                log.info("重新支付订单成功:{}", repayOrderRequest.toString());
+
+                if (client.equalsIgnoreCase(ClientType.H5.name())) {
+                    writeData(response, jsonData);
+
+                } else if (client.equalsIgnoreCase(ClientType.APP.name())) {
+                    //APP SDK支付  TODO
+                }
+
+            } else if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())) {
+
+                //微信支付 TODO
+            }
+
+        } else {
+
+            log.error("重新支付订单失败{}", jsonData.toString());
+            CommonUtil.sendJsonMessage(response, jsonData);
 
         }
     }
@@ -111,8 +187,8 @@ public class ProductOrderController {
             response.getWriter().write(jsonData.getData().toString());
             response.getWriter().flush();
             response.getWriter().close();
-        }catch (IOException e){
-            log.error("写出Html异常：{}",e);
+        } catch (IOException e) {
+            log.error("写出Html异常：{}", e);
         }
     }
 
@@ -126,7 +202,7 @@ public class ProductOrderController {
 
         //商户订单号,64个字符以内、可包含字母、数字、下划线；需保证在商户端不重复
         String no = UUID.randomUUID().toString();
-        log.info("订单号:{}",no);
+        log.info("订单号:{}", no);
         content.put("out_trade_no", no);
         content.put("product_code", "FAST_INSTANT_TRADE_PAY");
         //订单总金额，单位为元，精确到小数点后两位
@@ -143,9 +219,9 @@ public class ProductOrderController {
         request.setNotifyUrl(payUrlConfig.getAlipayCallbackUrl());
         request.setReturnUrl(payUrlConfig.getAlipaySuccessReturnUrl());
 
-        AlipayTradeWapPayResponse alipayResponse  = AliPayConfig.getInstance().pageExecute(request);
+        AlipayTradeWapPayResponse alipayResponse = AliPayConfig.getInstance().pageExecute(request);
 
-        if(alipayResponse.isSuccess()){
+        if (alipayResponse.isSuccess()) {
             System.out.println("调用成功");
 
             String form = alipayResponse.getBody();

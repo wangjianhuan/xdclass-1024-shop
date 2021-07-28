@@ -14,7 +14,7 @@ public class TimeConstant {
      *
      * 测试5分钟
      */
-    //public static final long ORDER_PAY_TIMEOUT_MILLS = 30 * 60 * 1000;
-    public static final long ORDER_PAY_TIMEOUT_MILLS = 5 * 60 * 1000;
+    public static final long ORDER_PAY_TIMEOUT_MILLS = 30 * 60 * 1000;
+//    public static final long ORDER_PAY_TIMEOUT_MILLS = 5 * 60 * 1000;
 
 }

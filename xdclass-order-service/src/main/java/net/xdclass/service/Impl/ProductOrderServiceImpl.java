@@ -3,13 +3,13 @@ package net.xdclass.service.Impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
-import net.xdclass.VO.CouponRecordVO;
-import net.xdclass.VO.OrderItemVO;
-import net.xdclass.VO.PayInfoVO;
-import net.xdclass.VO.ProductOrderAddressVO;
+import net.xdclass.VO.*;
 import net.xdclass.component.PayFactory;
 import net.xdclass.config.RabbitMQConfig;
+import net.xdclass.constant.CacheKey;
 import net.xdclass.constant.TimeConstant;
 import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
@@ -23,23 +23,22 @@ import net.xdclass.model.LoginUser;
 import net.xdclass.model.OrderMessage;
 import net.xdclass.model.ProductOrderDO;
 import net.xdclass.model.ProductOrderItemDO;
-import net.xdclass.request.ConfirmOrderRequest;
-import net.xdclass.request.LockCouponRecordRequest;
-import net.xdclass.request.LockProductRequest;
-import net.xdclass.request.OrderItemRequest;
+import net.xdclass.request.*;
 import net.xdclass.service.ProductOrderService;
 import net.xdclass.utils.CommonUtil;
 import net.xdclass.utils.JsonData;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static net.xdclass.constant.TimeConstant.ORDER_PAY_TIMEOUT_MILLS;
@@ -77,6 +76,9 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     @Autowired
     private PayFactory payFactory;
 
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
     /**
      * 创建订单
      * * 防重提交
@@ -95,10 +97,24 @@ public class ProductOrderServiceImpl implements ProductOrderService {
      * @param orderRequest
      * @return
      */
+    @Transactional
     @Override
     public JsonData confirmOrder(ConfirmOrderRequest orderRequest) {
 
         LoginUser loginUser = LoginInterceptor.threadLocal.get();
+
+        String orderToken = orderRequest.getToken();
+        if(StringUtils.isBlank(orderToken)){
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_TOKEN_NOT_EXIST);
+        }
+        //lua脚本 原子操作 检验令牌 删除令牌
+        String script = "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
+
+        Long result = redisTemplate.execute(new DefaultRedisScript<>(script, long.class), Arrays.asList(String.format(CacheKey.SUBMIT_ORDER_TOKEN_KEY, loginUser.getId()), orderToken));
+
+        if (result==0L){
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_TOKEN_EQUAL_FAIL);
+        }
 
         String orderOutTradeNo = CommonUtil.getStringNumRandom(32);
 
@@ -382,7 +398,6 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         return addressVO;
     }
 
-
     /**
      * 查询订单状态
      *
@@ -470,5 +485,105 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         }
 
         return JsonData.buildResult(BizCodeEnum.PAY_ORDER_CALLBACK_NOT_SUCCESS);
+    }
+
+    /**
+     * 分页查询我的订单
+     *
+     * @param page
+     * @param size
+     * @param state
+     * @return
+     */
+    @Override
+    public Map<String, Object> page(int page, int size, String state) {
+
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+
+        IPage<ProductOrderDO> orderDOPage = null;
+
+        Page<ProductOrderDO> pageInfo = new Page<>(page, size);
+        if (StringUtils.isBlank(state)) {
+            orderDOPage = productOrderMapper.selectPage(pageInfo, new QueryWrapper<ProductOrderDO>().eq("user_id", loginUser.getId()));
+        } else {
+            orderDOPage = productOrderMapper.selectPage(pageInfo, new QueryWrapper<ProductOrderDO>().eq("user_id", loginUser.getId()).eq("state", state));
+        }
+
+        //获取订单列表
+        List<ProductOrderDO> productOrderDOList = orderDOPage.getRecords();
+
+        List<ProductOrderVO> productOrderVOList = productOrderDOList.stream().map(orderDO -> {
+
+            List<ProductOrderItemDO> itemDOList = orderItemMapper.selectList(new QueryWrapper<ProductOrderItemDO>().eq("product_order_id", orderDO.getId()));
+
+            List<OrderItemVO> itemVOList = itemDOList.stream().map(item -> {
+                OrderItemVO itemVO = new OrderItemVO();
+                BeanUtils.copyProperties(item, itemVO);
+                return itemVO;
+            }).collect(Collectors.toList());
+
+            ProductOrderVO productOrderVO = new ProductOrderVO();
+            BeanUtils.copyProperties(orderDO, productOrderVO);
+            productOrderVO.setOrderItemList(itemVOList);
+            return productOrderVO;
+
+        }).collect(Collectors.toList());
+
+        Map<String, Object> pageMap = new HashMap<>(3);
+        pageMap.put("total_record", orderDOPage.getTotal());
+        pageMap.put("total_page", orderDOPage.getPages());
+        pageMap.put("current_data", productOrderVOList);
+
+        return pageMap;
+    }
+
+    /**
+     * 订单二次支付
+     *
+     * @param repayOrderRequest
+     * @return
+     */
+    @Override
+    @Transactional
+    public JsonData repay(RepayOrderRequest repayOrderRequest) {
+
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+
+        ProductOrderDO productOrderDO = productOrderMapper.selectOne(new QueryWrapper<ProductOrderDO>().eq("out_trade_no", repayOrderRequest.getOutTradeNo()).eq("user_id", loginUser.getId()));
+
+        log.info("订单状态:{}", productOrderDO);
+
+        if (productOrderDO == null) {
+            return JsonData.buildResult(BizCodeEnum.PAY_ORDER_NOT_EXIST);
+        }
+
+        //订单状态不对 不是NEW状态
+        if (productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.NEW.name())) {
+            return JsonData.buildResult(BizCodeEnum.PAY_ORDER_STATE_ERROR);
+        } else {
+            //订单创建到现在的存活时间
+            long orderLiveTime = CommonUtil.getCurrentTimestamp() - productOrderDO.getCreateTime().getTime();
+            //创建订单是零界点 ，所以在增加一分钟多几秒 ，假如29分也不可以支付
+            orderLiveTime += (70 * 1000);
+
+            if (orderLiveTime > ORDER_PAY_TIMEOUT_MILLS) {
+                return JsonData.buildResult(BizCodeEnum.PAY_ORDER_PAY_TIMEOUT);
+            } else {
+                //TODO 更新订单支付参数 payType ，还可以增加订单支付信息日志
+
+                //总时间-存活的时间 = 剩下的时间
+                PayInfoVO payInfoVO = new PayInfoVO(productOrderDO.getOutTradeNo(), productOrderDO.getPayAmount(), repayOrderRequest.getPayType(), repayOrderRequest.getClientType(), productOrderDO.getOutTradeNo(), "", orderLiveTime);
+
+                log.info("PayInfoVO={}", payInfoVO);
+                String payResult = payFactory.pay(payInfoVO);
+                if (StringUtils.isNoneBlank(payResult)) {
+                    log.info("创建二次支付订单成功:payinfo={},paysult={}", payInfoVO, payResult);
+                    return JsonData.buildSuccess(payResult);
+                } else {
+                    log.error("创建二次支付订单失败:payinfo={},paysult={}", payInfoVO, payResult);
+                    return JsonData.buildResult(BizCodeEnum.PAY_ORDER_FAIL);
+                }
+            }
+        }
     }
 }

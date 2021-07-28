@@ -1,5 +1,7 @@
 package net.xdclass.constant;
 
+import java.lang.module.FindException;
+
 /**
  * @author WJH
  * @class xdclass-1024-shop CacheKey
@@ -17,4 +19,9 @@ public class CacheKey {
      * 购物车 HASH 结构 ，key是用户唯一标识
      */
     public static final String CART_KEY = "cart:%s";
+
+    /**
+     * 提交表单的Token KEY
+     */
+    public static final String SUBMIT_ORDER_TOKEN_KEY = "order:submit:%s";
 }

@@ -60,4 +60,10 @@ public class ConfirmOrderRequest {
      */
     @JsonProperty("real_pay_amount")
     private BigDecimal realAmount;
+
+    /**
+     * 订单Token
+     */
+    @JsonProperty("token")
+    private String token;
 }
