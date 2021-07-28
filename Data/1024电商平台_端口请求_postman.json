@@ -1,0 +1,551 @@
+{
+	"info": {
+		"_postman_id": "de53a588-8ea0-4341-8f34-2c2f416b813f",
+		"name": "大课项目",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "优惠券服务",
+			"item": [
+				{
+					"name": "优惠券分页",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9002/api/coupon/v1/page_coupon?page=1&size=2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"api",
+								"coupon",
+								"v1",
+								"page_coupon"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "领取优惠券",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9002/api/coupon/v1/add/promotion/19"
+					},
+					"response": []
+				},
+				{
+					"name": "领券记录分页查询",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:9002/api/coupon_record/v1/page?page=1&size=22",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9002",
+							"path": [
+								"api",
+								"coupon_record",
+								"v1",
+								"page"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "22"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "查询优惠券记录详情",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9002/api/coupon_record/v1/detail/19"
+					},
+					"response": []
+				},
+				{
+					"name": "新人优惠券发放",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\":\"3\",\n    \"name\":\"wangjianhuan\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9002/api/coupon/v1/new_user_coupon"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "用户服务",
+			"item": [
+				{
+					"name": "登录接口",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mail\":\"1151777592@qq.com\",\n    \"pwd\":\"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9001/api/user/v1/login"
+					},
+					"response": []
+				},
+				{
+					"name": "个人信息查询",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9001/api/user/v1/detail"
+					},
+					"response": []
+				},
+				{
+					"name": "新增收货地址",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"city\": \"广州市\",\n  \"default_status\": 1,\n  \"detail_address\": \"运营中心-老王隔壁88号\",\n  \"phone\": \"15677290653\",\n  \"province\": \"广东省\",\n  \"receive_name\": \"冰冰\",\n  \"region\": \"天河区\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9001/api/address/v1/add"
+					},
+					"response": []
+				},
+				{
+					"name": "用户头像上传",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/wjh/Desktop/java/加密：工业级PaaS云平台+SpringCloudAlibaba+JDK11综合项目实战/笔记-代码-书籍/笔记/img/5_0.png"
+								}
+							]
+						},
+						"url": "http://localhost:9001/api/user/v1/upload"
+					},
+					"response": []
+				},
+				{
+					"name": "用户注册",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"651460\",\n  \"head_img\": \"https://wangjianhuan-1024shop.oss-cn-shenzhen.aliyuncs.com/user/2021/07/12/ab2da37343664d3e8a7e5fcf11bc9a4c.png\",\n  \"mail\": \"1151777592@qq.com\",\n  \"name\": \"Anna小姐姐\",\n  \"pwd\": \"123456\",\n  \"sex\": 1,\n  \"slogan\": \"人生需要动态规划，学习需要贪心算法\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9001/api/user/v1/register"
+					},
+					"response": []
+				},
+				{
+					"name": "图片验证码",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:9001/api/user/v1/captcha"
+					},
+					"response": []
+				},
+				{
+					"name": "发送邮箱验证码",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9001/api/user/v1/send_code?to=1151777592@qq.com&captcha=5051",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"user",
+								"v1",
+								"send_code"
+							],
+							"query": [
+								{
+									"key": "to",
+									"value": "1151777592@qq.com"
+								},
+								{
+									"key": "captcha",
+									"value": "5051"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "删除指定地址",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9001/api/address/v1/del/43"
+					},
+					"response": []
+				},
+				{
+					"name": "根据id查找地址",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9001/api/address/v1/find/2"
+					},
+					"response": []
+				},
+				{
+					"name": "查询全部地址",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9001/api/address/v1/list"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "产品服务",
+			"item": [
+				{
+					"name": "轮播图列表",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:9003/api/banner/v1/list"
+					},
+					"response": []
+				},
+				{
+					"name": "产品分页查询",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9003/api/product/v1/product_page?page=2&size=3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9003",
+							"path": [
+								"api",
+								"product",
+								"v1",
+								"product_page"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "2"
+								},
+								{
+									"key": "size",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "根据ID商品详情查询",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:9003/api/product/v1/detail/4"
+					},
+					"response": []
+				},
+				{
+					"name": "添加到购物车",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"product_id\":2,\n    \"buy_num\":2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9003/api/cart/v1/add"
+					},
+					"response": []
+				},
+				{
+					"name": "清空购物车",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9003/api/cart/v1/clear"
+					},
+					"response": []
+				},
+				{
+					"name": "查看我的购物车",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9003/api/cart/v1/mycart"
+					},
+					"response": []
+				},
+				{
+					"name": "删除购物项",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9003/api/cart/v1/delete/1"
+					},
+					"response": []
+				},
+				{
+					"name": "修改购物车商品数量",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"product_id\":1,\n    \"buy_num\":5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9003/api/cart/v1/change"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "订单服务",
+			"item": [
+				{
+					"name": "下单接口",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"coupon_record_id\":11,\n  \"product_ids\":[1,2],\n  \"pay_type\":\"ALIPAY\",\n  \"client_type\":\"H5\",\n  \"address_id\":2,\n  \"total_amount\":530,\n  \"real_pay_amount\":525,\n  \"token\":\"SbD5D4FLpUzemiuwSEytwGM9LLFGISDQ\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:9004/api/order/v1/confirm"
+					},
+					"response": []
+				},
+				{
+					"name": "分页查询我的订单",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:9004/api/order/v1/page?page=1&size=2&state=PAY",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9004",
+							"path": [
+								"api",
+								"order",
+								"v1",
+								"page"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								},
+								{
+									"key": "state",
+									"value": "PAY"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取下单令牌",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:9004/api/order/v1/get_token"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
