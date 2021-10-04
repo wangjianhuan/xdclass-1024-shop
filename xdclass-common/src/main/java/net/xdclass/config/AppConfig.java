@@ -38,21 +38,22 @@ public class AppConfig {
     private String redisPwd;
 
     @Bean
-    public RedissonClient redissonClient(){
+    public RedissonClient redissonClient() {
         Config config = new Config();
         //单机方式
-        config.useSingleServer().setPassword(redisPwd).setAddress("redis://"+redisHost+":"+redisPort);
+        config.useSingleServer().setPassword(redisPwd).setAddress("redis://" + redisHost + ":" + redisPort);
 
         return Redisson.create(config);
     }
 
     /**
      * 避免存储的KEY乱码，但hash结构的依旧乱码
+     *
      * @param factory
      * @return
      */
     @Bean
-    public RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory factory){
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
 
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
 
@@ -69,20 +70,21 @@ public class AppConfig {
     /**
      * feign调用丢失token，
      * 解决：新增拦截器并加入token
+     *
      * @return
      */
     @Bean("requestInterceptor")
-    public RequestInterceptor requestInterceptor(){
+    public RequestInterceptor requestInterceptor() {
         return template -> {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if(attributes!=null){
+            if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
-                if (null == request){
+                if (null == request) {
                     return;
                 }
                 log.info(request.getHeaderNames().toString());
                 template.header("token", request.getHeader("token"));
-            }else {
+            } else {
                 log.warn("requestInterceptor获取Header空指针异常");
             }
         };
